@@ -11,6 +11,8 @@ use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\LaporanBarangMasukController;
+use App\Http\Controllers\LaporanBarangKeluarController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -68,6 +70,12 @@ Route::middleware('auth')->group(function () {
     // Laporan Stok Routes
     Route::get('/laporan-stok/export-excel', [LaporanStokController::class, 'exportExcel'])->name('laporan-stok.export-excel');
     Route::get('/laporan-stok', [LaporanStokController::class, 'index'])->name('laporan-stok.index');
+
+    // Laporan Barang Masuk Routes
+    Route::get('/laporan-barang-masuk', [LaporanBarangMasukController::class, 'index'])->name('laporan-barang-masuk.index');
+    
+    // Laporan Barang Keluar Routes
+    Route::get('/laporan-barang-keluar', [LaporanBarangKeluarController::class, 'index'])->name('laporan-barang-keluar.index');
 
     // User Management Routes
     Route::get('/user-management', [UserManagementController::class, 'index'])->name('user-management.index');

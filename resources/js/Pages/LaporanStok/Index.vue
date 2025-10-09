@@ -253,7 +253,7 @@ const exportToExcel = async () => {
                         >
                             <option value="all">-- Pilih --</option>
                             <option value="minimum">Stok Minimum</option>
-                            <option value="maximum">Stok Maksimum</option>
+                            <option value="maximum">Seluruh Stok</option>
                         </select>
                     </div>
                     

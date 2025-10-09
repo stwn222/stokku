@@ -32,10 +32,7 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom attributes for validator errors.
-     */
-    public function attributes(): array
+        public function attributes(): array
     {
         return [
             'username' => 'username',
@@ -53,7 +50,6 @@ class LoginRequest extends FormRequest
             'password.required' => 'Password wajib diisi',
         ];
     }
-
     /**
      * Attempt to authenticate the request's credentials.
      *
@@ -67,7 +63,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'username' => __('Username atau password salah.'),
+                 'username' => __('Username atau password salah.'),
             ]);
         }
 

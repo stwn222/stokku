@@ -27,9 +27,9 @@ class LaporanStokController extends Controller
         // Apply stock filter
         if ($filterStok === 'minimum') {
             $query->whereColumn('stok', '<=', 'stok_minimum');
-        } elseif ($filterStok === 'maximum') {
-            $query->whereColumn('stok', '>=', 'stok_maksimum');
         }
+        // Jika maximum, tampilkan semua data (tidak ada filter)
+        // elseif ($filterStok === 'maximum') - tidak perlu kondisi ini
 
         $barangs = $query->orderBy('id_barang', 'asc')
             ->paginate($perPage)
@@ -61,9 +61,8 @@ class LaporanStokController extends Controller
 
         if ($filterStok === 'minimum') {
             $query->whereColumn('stok', '<=', 'stok_minimum');
-        } elseif ($filterStok === 'maximum') {
-            $query->whereColumn('stok', '>=', 'stok_maksimum');
         }
+        // Jika maximum, tampilkan semua data (tidak ada filter)
 
         $barangs = $query->orderBy('id_barang', 'asc')->get();
 

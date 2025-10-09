@@ -151,6 +151,7 @@ const toggleSidebar = () => {
 
                 <Link 
                     :href="route('barang-keluar.index')"
+                    :class="{ 'bg-gray-100': route().current('barang-keluar.*') }"
                     class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                 >
                     <TrendingDown :size="20" />
@@ -167,6 +168,7 @@ const toggleSidebar = () => {
 
                     <Link 
                         :href="route('laporan-stok.index')"
+                        :class="{ 'bg-gray-100': route().current('laporan-stok.*') }"
                         class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                     >
                         <FileText :size="20" />
@@ -174,7 +176,8 @@ const toggleSidebar = () => {
                     </Link>
 
                     <Link 
-                        href="#"
+                        :href="route('laporan-barang-masuk.index')"
+                        :class="{ 'bg-gray-100': route().current('laporan-barang-masuk.*') }"
                         class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                     >
                         <FileText :size="20" />
@@ -182,11 +185,21 @@ const toggleSidebar = () => {
                     </Link>
 
                     <Link 
-                        href="#"
+                        :href="route('laporan-barang-keluar.index')"
+                        :class="{ 'bg-gray-100': route().current('laporan-barang-keluar.*') }"
                         class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                     >
                         <FileText :size="20" />
                         <span class="font-medium">Laporan Barang Keluar</span>
+                    </Link>
+
+                    <Link 
+                        :href="route('laporan-barang-keluar.index')"
+                        :class="{ 'bg-gray-100': route().current('laporan-barang-keluar.*') }"
+                        class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+                    >
+                        <FileText :size="20" />
+                        <span class="font-medium">Invoice</span>
                     </Link>
                 </template>
 
@@ -200,6 +213,7 @@ const toggleSidebar = () => {
 
                     <Link 
                         :href="route('user-management.index')"
+                        :class="{ 'bg-gray-100': route().current('user-management.*') }"
                         class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                     >
                         <Users :size="20" />
