@@ -14,8 +14,9 @@ defineProps({
     },
 });
 
+// --- [MODIFIKASI] --- Ubah dari email ke username
 const form = useForm({
-    email: '',
+    username: '',
     password: '',
     remember: false,
 });
@@ -79,22 +80,24 @@ const submit = () => {
                 </div>
 
                 <form @submit.prevent="submit" class="space-y-4">
+                    <!-- Username Field (Ganti dari Email) -->
                     <div>
                         <input
-                            id="email"
-                            type="email"
-                            placeholder="Email"
-                            v-model="form.email"
+                            id="username"
+                            type="text"
+                            placeholder="Username"
+                            v-model="form.username"
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 transition"
                             required
                             autofocus
                             autocomplete="username"
                         />
-                        <div v-if="form.errors.email" class="mt-2 text-sm text-red-600">
-                            {{ form.errors.email }}
+                        <div v-if="form.errors.username" class="mt-2 text-sm text-red-600">
+                            {{ form.errors.username }}
                         </div>
                     </div>
 
+                    <!-- Password Field -->
                     <div>
                         <input
                             id="password"

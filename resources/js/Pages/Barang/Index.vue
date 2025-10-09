@@ -124,6 +124,11 @@ const getJenisBarangNama = (barang) => {
 const getSatuanNama = (barang) => {
     return barang?.satuan?.nama_satuan || '-';
 };
+
+// Helper function untuk cek stok rendah
+const isLowStock = (barang) => {
+    return barang.stok < 10;
+};
 </script>
 
 <template>
@@ -157,7 +162,7 @@ const getSatuanNama = (barang) => {
 
             <!-- Filters -->
             <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Tampilkan</label>
                         <select 
@@ -182,6 +187,14 @@ const getSatuanNama = (barang) => {
                         />
                     </div>
                 </div>
+
+                <!-- Legend -->
+                <div class="flex items-center gap-4 text-xs">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
+                        <span class="text-gray-600">Stok Rendah (&lt; 10)</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Table -->
@@ -203,7 +216,10 @@ const getSatuanNama = (barang) => {
                         <tr 
                             v-for="(barang, index) in barangs.data" 
                             :key="barang.id"
-                            class="hover:bg-gray-50"
+                            :class="[
+                                'hover:bg-gray-50',
+                                isLowStock(barang) ? 'bg-red-100' : ''
+                            ]"
                         >
                             <td class="px-4 py-3 text-sm text-gray-700 border">
                                 {{ barangs.from + index }}
@@ -211,7 +227,17 @@ const getSatuanNama = (barang) => {
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ barang.id_barang }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ barang.nama_barang }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ getJenisBarangNama(barang) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ barang.stok }}</td>
+                            <td class="px-4 py-3 text-sm border">
+                                <span :class="[
+                                    'font-semibold',
+                                    isLowStock(barang) ? 'text-red-600' : 'text-gray-700'
+                                ]">
+                                    {{ barang.stok }}
+                                </span>
+                                <span v-if="isLowStock(barang)" class="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                    Stok Rendah
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ getSatuanNama(barang) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatCurrency(barang.harga_jual) }}</td>
                             <td class="px-4 py-3 text-sm border">

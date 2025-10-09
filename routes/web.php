@@ -10,6 +10,7 @@ use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\BarangKeluarController;
+use App\Http\Controllers\UserManagementController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
     
-    // Barang Routes -
+    // Barang Routes
     Route::get('/barang/next-id/{jenisBarangId}', [BarangController::class, 'getNextId'])->name('barang.next-id');
     Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
     Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
@@ -67,6 +68,12 @@ Route::middleware('auth')->group(function () {
     // Laporan Stok Routes
     Route::get('/laporan-stok/export-excel', [LaporanStokController::class, 'exportExcel'])->name('laporan-stok.export-excel');
     Route::get('/laporan-stok', [LaporanStokController::class, 'index'])->name('laporan-stok.index');
+
+    // User Management Routes
+    Route::get('/user-management', [UserManagementController::class, 'index'])->name('user-management.index');
+    Route::post('/user-management', [UserManagementController::class, 'store'])->name('user-management.store');
+    Route::put('/user-management/{user}', [UserManagementController::class, 'update'])->name('user-management.update');
+    Route::delete('/user-management/{user}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
 });
 
 require __DIR__.'/auth.php';

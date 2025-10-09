@@ -50,19 +50,34 @@ const shouldHighlight = (barang) => {
     return false;
 };
 
+// Helper function untuk cek stok rendah
+const isLowStock = (barang) => {
+    return barang.stok < 10;
+};
+
 const printReport = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     
     let tableRows = '';
     props.barangs.data.forEach((barang, index) => {
-        const highlight = shouldHighlight(barang) ? 'background-color: #fef08a;' : '';
+        let bgColor = '';
+        if (shouldHighlight(barang)) {
+            bgColor = 'background-color: #fef08a;'; // Yellow for min/max
+        } else if (isLowStock(barang)) {
+            bgColor = 'background-color: #fee2e2;'; // Red for low stock
+        }
+        
+        const stokDisplay = isLowStock(barang) 
+            ? `${barang.stok} <span style="color: #dc2626; font-weight: bold;">(Stok Rendah)</span>`
+            : barang.stok;
+        
         tableRows += `
-            <tr style="${highlight}">
+            <tr style="${bgColor}">
                 <td style="border: 1px solid #ddd; padding: 8px;">${index + 1}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${barang.id_barang}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${barang.nama_barang}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${barang.jenis_barang.nama_jenis}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${barang.stok}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${stokDisplay}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${barang.satuan.nama_satuan}</td>
             </tr>
         `;
@@ -299,6 +314,18 @@ const exportToExcel = async () => {
                     </div>
                 </div>
 
+                <!-- Legend -->
+                <div class="flex items-center gap-4 text-xs mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
+                        <span class="text-gray-600">Stok Mencapai Batas (Min/Maks)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
+                        <span class="text-gray-600">Stok Rendah (&lt; 10)</span>
+                    </div>
+                </div>
+
                 <!-- Table -->
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
@@ -318,7 +345,8 @@ const exportToExcel = async () => {
                                 :key="barang.id"
                                 :class="[
                                     'hover:bg-gray-50',
-                                    shouldHighlight(barang) ? 'bg-yellow-200' : ''
+                                    shouldHighlight(barang) ? 'bg-yellow-200' : '',
+                                    isLowStock(barang) && !shouldHighlight(barang) ? 'bg-red-100' : ''
                                 ]"
                             >
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
@@ -333,8 +361,16 @@ const exportToExcel = async () => {
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                                     {{ barang.jenis_barang.nama_jenis }}
                                 </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
-                                    {{ barang.stok }}
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-center">
+                                    <span :class="[
+                                        'font-semibold',
+                                        isLowStock(barang) ? 'text-red-600' : 'text-gray-700'
+                                    ]">
+                                        {{ barang.stok }}
+                                    </span>
+                                    <span v-if="isLowStock(barang)" class="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                        Stok Rendah
+                                    </span>
                                 </td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
                                     {{ barang.satuan.nama_satuan }}
