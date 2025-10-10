@@ -20,6 +20,7 @@ class BarangMasuk extends Model
         'total',
         'vendor',
         'keterangan',
+        'user_id',
     ];
 
     protected $casts = [
@@ -35,7 +36,7 @@ class BarangMasuk extends Model
 
     public function barang()
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Barang::class, 'barang_id');
     }
 
     // Generate kode transaksi otomatis
@@ -68,5 +69,11 @@ class BarangMasuk extends Model
     {
         $subtotal = $this->harga_beli * $this->jumlah;
         return $subtotal + $this->ppn;
+    }
+
+    // Relasi ke User - TAMBAHKAN INI
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

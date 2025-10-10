@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use App\Models\BarangKeluar;
 use App\Models\Barang;
 use Illuminate\Http\Request;
@@ -83,6 +84,9 @@ class BarangKeluarController extends Controller
         // Hitung total
         $subtotal = $validated['harga_jual'] * $validated['jumlah'];
         $validated['total'] = $subtotal + $validated['ppn'];
+
+        // Tambahkan user_id dari user yang sedang login
+        $validated['user_id'] = Auth::id();
 
         // Simpan transaksi
         BarangKeluar::create($validated);

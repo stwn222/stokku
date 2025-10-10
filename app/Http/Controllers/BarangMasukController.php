@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use App\Models\BarangMasuk;
 use App\Models\Barang;
 use Illuminate\Http\Request;
@@ -67,8 +68,11 @@ class BarangMasukController extends Controller
         $subtotal = $validated['harga_beli'] * $validated['jumlah'];
         $validated['total'] = $subtotal + $validated['ppn'];
 
+        // Tambahkan user_id dari user yang sedang login
+         $validated['user_id'] = Auth::id();
+
         // Simpan transaksi
-        $barangMasuk = BarangMasuk::create($validated);
+        BarangMasuk::create($validated);
 
         // Update stok barang
         $barang = Barang::findOrFail($validated['barang_id']);

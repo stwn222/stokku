@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\SatuanController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\LaporanStokController;
@@ -23,19 +25,15 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
-    
     // Barang Routes
     Route::get('/barang/next-id/{jenisBarangId}', [BarangController::class, 'getNextId'])->name('barang.next-id');
     Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
@@ -76,6 +74,14 @@ Route::middleware('auth')->group(function () {
     
     // Laporan Barang Keluar Routes
     Route::get('/laporan-barang-keluar', [LaporanBarangKeluarController::class, 'index'])->name('laporan-barang-keluar.index');
+
+    Route::get('/invoice', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoice.index');
+    Route::get('/invoice/create', [App\Http\Controllers\InvoiceController::class, 'create'])->name('invoice.create');
+    Route::post('/invoice', [App\Http\Controllers\InvoiceController::class, 'store'])->name('invoice.store');
+    Route::get('/invoice/{invoice}/edit', [App\Http\Controllers\InvoiceController::class, 'edit'])->name('invoice.edit');
+    Route::put('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('invoice.update');
+    Route::delete('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoice.destroy');
+    Route::get('/invoice/print', [App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
 
     // User Management Routes
     Route::get('/user-management', [UserManagementController::class, 'index'])->name('user-management.index');

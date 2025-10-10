@@ -1,3 +1,4 @@
+<!-- resources/js/Layouts/AuthenticatedLayout.vue - UPDATED -->
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -194,8 +195,8 @@ const toggleSidebar = () => {
                     </Link>
 
                     <Link 
-                        :href="route('laporan-barang-keluar.index')"
-                        :class="{ 'bg-gray-100': route().current('laporan-barang-keluar.*') }"
+                        :href="route('invoice.index')"
+                        :class="{ 'bg-gray-100': route().current('invoice.*') }"
                         class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
                     >
                         <FileText :size="20" />

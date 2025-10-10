@@ -19,6 +19,7 @@ class BarangKeluar extends Model
         'total',
         'is_ppn',
         'keterangan',
+        'user_id',
     ];
 
     protected $casts = [
@@ -32,9 +33,9 @@ class BarangKeluar extends Model
     /**
      * Relasi ke tabel barangs
      */
-    public function barang()
+   public function barang()
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Barang::class, 'barang_id');
     }
 
     /**
@@ -57,5 +58,10 @@ class BarangKeluar extends Model
 
         // Format: TK-00001 (5 digit dengan leading zero)
         return 'TK-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
