@@ -1,8 +1,19 @@
 <script setup>
-import { ref, watch } from 'vue';
+// computed ditambahkan dari 'vue'
+import { ref, watch, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Home, ChevronRight, Pencil, Trash2, Plus } from 'lucide-vue-next';
+// Ikon Check dan ChevronsUpDown ditambahkan
+import { Home, ChevronRight, Pencil, Trash2, Plus, Check, ChevronsUpDown } from 'lucide-vue-next';
+// Komponen Combobox ditambahkan dari Headless UI
+import {
+  Combobox,
+  ComboboxButton,
+  ComboboxInput,
+  ComboboxOptions,
+  ComboboxOption,
+  TransitionRoot,
+} from '@headlessui/vue';
 
 const props = defineProps({
     barangs: Object,
@@ -28,6 +39,21 @@ const form = ref({
 
 const previewIdBarang = ref('');
 
+// --- State untuk Searchable Dropdown ---
+const jenisBarangQuery = ref('');
+const filteredJenisBarangs = computed(() =>
+    jenisBarangQuery.value === ''
+        ? props.jenisBarangs
+        : props.jenisBarangs.filter((jenis) =>
+            jenis.nama_jenis
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes(jenisBarangQuery.value.toLowerCase().replace(/\s+/g, ''))
+        )
+);
+
+const comboboxButtonRef = ref(null); // <-- DIUBAH: Menambahkan ref untuk tombol combobox
+
 watch([perPage, search], () => {
     router.get(route('barang.index'), {
         per_page: perPage.value,
@@ -51,6 +77,8 @@ watch(() => form.value.jenis_barang_id, async (newVal) => {
                 console.error('Error fetching next ID:', error);
             }
         }
+    } else if (!newVal) { // Reset preview if selection is cleared
+        previewIdBarang.value = '';
     }
 });
 
@@ -67,6 +95,7 @@ const openCreateModal = () => {
         harga_jual: 0,
     };
     previewIdBarang.value = '';
+    jenisBarangQuery.value = ''; // Reset query pencarian
     showModal.value = true;
 };
 
@@ -83,6 +112,7 @@ const openEditModal = (barang) => {
         harga_jual: barang.harga_jual,
     };
     previewIdBarang.value = barang.id_barang;
+    jenisBarangQuery.value = ''; // Reset query pencarian
     showModal.value = true;
 };
 
@@ -116,7 +146,6 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
-// Helper function untuk safely access nested properties
 const getJenisBarangNama = (barang) => {
     return barang?.jenis_barang?.nama_jenis || '-';
 };
@@ -125,9 +154,8 @@ const getSatuanNama = (barang) => {
     return barang?.satuan?.nama_satuan || '-';
 };
 
-// Helper function untuk cek stok rendah
 const isLowStock = (barang) => {
-    return barang.stok < 10;
+    return barang.stok < (barang.stok_minimum || 10); // Gunakan stok_minimum jika ada
 };
 </script>
 
@@ -146,7 +174,6 @@ const isLowStock = (barang) => {
         </template>
 
         <div class="bg-white rounded-lg shadow-md">
-            <!-- Header Card -->
             <div class="border-b border-gray-200 p-6">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-bold text-gray-800">Data Barang</h2>
@@ -160,14 +187,13 @@ const isLowStock = (barang) => {
                 </div>
             </div>
 
-            <!-- Filters -->
             <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Tampilkan</label>
                         <select 
                             v-model="perPage"
-                            class="border border-gray-300 rounded px-2 py-1 text-sm"
+                            class="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="10">10</option>
                             <option value="25">25</option>
@@ -182,22 +208,20 @@ const isLowStock = (barang) => {
                         <input 
                             v-model="search"
                             type="text"
-                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
+                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Cari barang..."
                         />
                     </div>
                 </div>
 
-                <!-- Legend -->
                 <div class="flex items-center gap-4 text-xs">
                     <div class="flex items-center gap-2">
                         <div class="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-                        <span class="text-gray-600">Stok Rendah (&lt; 10)</span>
+                        <span class="text-gray-600">Stok di Bawah Minimum</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Table -->
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50">
@@ -268,47 +292,8 @@ const isLowStock = (barang) => {
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="p-6 flex items-center justify-between border-t border-gray-200">
-                <div class="text-sm text-gray-700">
-                    Menampilkan {{ barangs.from || 0 }} sampai {{ barangs.to || 0 }} dari {{ barangs.total }} data
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button 
-                        @click="router.get(barangs.prev_page_url)"
-                        :disabled="!barangs.prev_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &lt;
-                    </button>
-
-                    <template v-for="link in barangs.links.slice(1, -1)" :key="link.label">
-                        <button 
-                            @click="link.url ? router.get(link.url) : null"
-                            :class="[
-                                'px-3 py-1 border rounded',
-                                link.active 
-                                    ? 'bg-blue-500 text-white border-blue-500' 
-                                    : 'border-gray-300 hover:bg-gray-100'
-                            ]"
-                        >
-                            {{ link.label }}
-                        </button>
-                    </template>
-
-                    <button 
-                        @click="router.get(barangs.next_page_url)"
-                        :disabled="!barangs.next_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &gt;
-                    </button>
-                </div>
             </div>
-        </div>
 
-        <!-- Modal -->
         <div 
             v-if="showModal"
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -320,47 +305,76 @@ const isLowStock = (barang) => {
                 </h3>
 
                 <form @submit.prevent="submitForm" class="space-y-4">
-                    <!-- Jenis Barang -->
+                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang</label>
-                        <select 
-                            v-model="form.jenis_barang_id"
-                            required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                        >
-                            <option value="">Pilih Jenis Barang</option>
-                            <option v-for="jenis in jenisBarangs" :key="jenis.id" :value="jenis.id">
-                                {{ jenis.nama_jenis }} ({{ jenis.kode_jenis }})
-                            </option>
-                        </select>
+                        <Combobox v-model="form.jenis_barang_id" as="div" class="relative">
+                            <div class="relative">
+                                <ComboboxInput
+                                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    @change="jenisBarangQuery = $event.target.value"
+                                    :display-value="(jenisId) => jenisBarangs.find(j => j.id === jenisId)?.nama_jenis ?? ''"
+                                    placeholder="Pilih atau cari jenis barang"
+                                    required
+                                    @focus="if (comboboxButtonRef) comboboxButtonRef.value.click()"
+                                    autocomplete="off"
+                                /> <ComboboxButton ref="comboboxButtonRef" class="absolute inset-y-0 right-0 flex items-center pr-2"> <ChevronsUpDown class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                </ComboboxButton>
+                            </div>
+                            <TransitionRoot
+                                leave="transition ease-in duration-100"
+                                leave-from="opacity-100"
+                                leave-to="opacity-0"
+                                @after-leave="jenisBarangQuery = ''"
+                            >
+                                <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                    <div v-if="filteredJenisBarangs.length === 0 && jenisBarangQuery !== ''" class="relative cursor-default select-none py-2 px-4 text-gray-700">
+                                        Tidak ditemukan.
+                                    </div>
+                                    <ComboboxOption
+                                        v-for="jenis in filteredJenisBarangs"
+                                        :key="jenis.id"
+                                        :value="jenis.id"
+                                        v-slot="{ selected, active }"
+                                        as="template"
+                                    >
+                                        <li :class="['relative cursor-default select-none py-2 pl-10 pr-4', active ? 'bg-blue-500 text-white' : 'text-gray-900']">
+                                            <span :class="['block truncate', selected ? 'font-medium' : 'font-normal']">
+                                                {{ jenis.nama_jenis }} ({{ jenis.kode_jenis }})
+                                            </span>
+                                            <span v-if="selected" :class="['absolute inset-y-0 left-0 flex items-center pl-3', active ? 'text-white' : 'text-blue-600']">
+                                                <Check class="h-5 w-5" aria-hidden="true" />
+                                            </span>
+                                        </li>
+                                    </ComboboxOption>
+                                </ComboboxOptions>
+                            </TransitionRoot>
+                        </Combobox>
                     </div>
 
-                    <!-- Preview ID Barang -->
                     <div v-if="previewIdBarang" class="bg-blue-50 border border-blue-200 rounded p-3">
                         <p class="text-xs text-gray-600 mb-1">ID Barang yang akan digunakan:</p>
                         <p class="text-lg font-bold text-blue-600">{{ previewIdBarang }}</p>
                     </div>
 
-                    <!-- Nama Barang -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input 
                             v-model="form.nama_barang"
                             type="text"
                             required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Masukkan nama barang"
                         />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Satuan -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Satuan</label>
                             <select 
                                 v-model="form.satuan_id"
                                 required
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Pilih Satuan</option>
                                 <option v-for="satuan in satuans" :key="satuan.id" :value="satuan.id">
@@ -369,7 +383,6 @@ const isLowStock = (barang) => {
                             </select>
                         </div>
 
-                        <!-- Stok -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Stok Awal</label>
                             <input 
@@ -377,39 +390,39 @@ const isLowStock = (barang) => {
                                 type="number"
                                 required
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
+                                :disabled="modalMode === 'edit'"
+                                :title="modalMode === 'edit' ? 'Stok awal tidak bisa diubah. Gunakan modul penyesuaian stok.' : ''"
+                                :class="{ 'bg-gray-100' : modalMode === 'edit' }"
                             />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Stok Minimum -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Stok Minimum</label>
                             <input 
                                 v-model="form.stok_minimum"
                                 type="number"
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                             />
                         </div>
 
-                        <!-- Stok Maksimum -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Stok Maksimum</label>
                             <input 
                                 v-model="form.stok_maksimum"
                                 type="number"
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                             />
                         </div>
                     </div>
 
-                    <!-- Harga Jual -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual</label>
                         <input 
@@ -417,8 +430,7 @@ const isLowStock = (barang) => {
                             type="number"
                             required
                             min="0"
-                            step="0.01"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                             placeholder="0"
                         />
                     </div>
