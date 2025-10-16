@@ -13,32 +13,35 @@ use Carbon\Carbon;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Display a listing of invoices
-     */
     public function index(Request $request)
     {
         $query = Invoice::with(['user', 'details.barang'])->latest();
         
-        // Filter berdasarkan tipe invoice
         if ($request->filled('tipe_invoice')) {
             $query->where('tipe_invoice', $request->tipe_invoice);
         }
         
         $invoices = $query->paginate(10);
         
+        // Load daftar barang untuk dropdown (include stok)
+        $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
+            ->orderBy('nama_barang', 'asc')
+            ->get();
+        
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,
             'filters' => $request->only(['tipe_invoice']),
+            'barangList' => $barangList,
+            'nextMJUNumber' => $this->getNextInvoiceNumber('MJU'),
+            'nextBIPNumber' => $this->getNextInvoiceNumber('BIP'),
         ]);
     }
 
-    /**
-     * Show the form for creating a new invoice
-     */
     public function create()
     {
-        $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual')->get();
+        $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
+            ->orderBy('nama_barang', 'asc')
+            ->get();
         
         return Inertia::render('Invoice/Create', [
             'barangList' => $barangList,
@@ -47,9 +50,6 @@ class InvoiceController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created invoice in storage
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -68,6 +68,15 @@ class InvoiceController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Validasi stok untuk setiap barang
+            foreach ($validated['details'] as $detail) {
+                $barang = Barang::findOrFail($detail['barang_id']);
+                
+                if ($detail['qty'] > $barang->stok) {
+                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
+                }
+            }
 
             $nomorInvoice = $this->generateInvoiceNumber(
                 $validated['tipe_invoice'], 
@@ -93,6 +102,10 @@ class InvoiceController extends Controller
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
                 ]);
+                
+                // Kurangi stok barang
+                $barang = Barang::findOrFail($detail['barang_id']);
+                $barang->decrement('stok', $detail['qty']);
             }
 
             DB::commit();
@@ -102,16 +115,15 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Show the form for editing the specified invoice
-     */
     public function edit(Invoice $invoice)
     {
-        $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual')->get();
+        $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
+            ->orderBy('nama_barang', 'asc')
+            ->get();
         
         return Inertia::render('Invoice/Edit', [
             'invoice' => $invoice->load('details.barang'),
@@ -119,9 +131,6 @@ class InvoiceController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified invoice in storage
-     */
     public function update(Request $request, Invoice $invoice)
     {
         $validated = $request->validate([
@@ -140,6 +149,23 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
+            // Kembalikan stok dari detail lama
+            foreach ($invoice->details as $oldDetail) {
+                $barang = Barang::find($oldDetail->barang_id);
+                if ($barang) {
+                    $barang->increment('stok', $oldDetail->qty);
+                }
+            }
+
+            // Validasi stok untuk detail baru
+            foreach ($validated['details'] as $detail) {
+                $barang = Barang::findOrFail($detail['barang_id']);
+                
+                if ($detail['qty'] > $barang->stok) {
+                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
+                }
+            }
+
             $invoice->update([
                 'nama_client' => $validated['nama_client'],
                 'nomor_client' => $validated['nomor_client'],
@@ -149,8 +175,10 @@ class InvoiceController extends Controller
                 'ppn' => $validated['ppn'] ?? false,
             ]);
 
+            // Hapus detail lama
             $invoice->details()->delete();
 
+            // Simpan detail baru dan kurangi stok
             foreach ($validated['details'] as $detail) {
                 InvoiceDetail::create([
                     'invoice_id' => $invoice->id,
@@ -158,6 +186,9 @@ class InvoiceController extends Controller
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
                 ]);
+                
+                $barang = Barang::findOrFail($detail['barang_id']);
+                $barang->decrement('stok', $detail['qty']);
             }
 
             DB::commit();
@@ -167,30 +198,37 @@ class InvoiceController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Remove the specified invoice from storage
-     */
     public function destroy(Invoice $invoice)
     {
         try {
+            DB::beginTransaction();
+            
+            // Kembalikan stok barang
+            foreach ($invoice->details as $detail) {
+                $barang = Barang::find($detail->barang_id);
+                if ($barang) {
+                    $barang->increment('stok', $detail->qty);
+                }
+            }
+            
             $nomorInvoice = $invoice->nomor_invoice;
             $invoice->delete();
 
+            DB::commit();
+
             return redirect()->route('invoice.index')
-                ->with('success', 'Invoice ' . $nomorInvoice . ' berhasil dihapus');
+                ->with('success', 'Invoice ' . $nomorInvoice . ' berhasil dihapus dan stok dikembalikan');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Show the print preview page for invoices
-     */
     public function print(Request $request)
     {
         $query = Invoice::with(['user', 'details.barang'])->latest();
@@ -206,27 +244,31 @@ class InvoiceController extends Controller
         ]);
     }
 
-    /**
-     * Generate nomor invoice dengan format: TIPE/NOMOR.DD.MM.YYYY
-     */
+    public function printSingle($id)
+    {
+        $invoice = Invoice::with(['user', 'details.barang'])->findOrFail($id);
+        
+        return Inertia::render('Invoice/PrintSingle', [
+            'invoice' => $invoice,
+        ]);
+    }
+
     private function generateInvoiceNumber($tipe, $tanggal = null)
     {
-        if (!$tanggal) {
-            $tanggal = Carbon::now();
-        } else {
-            $tanggal = Carbon::parse($tanggal);
-        }
+        $tanggal = $tanggal ? Carbon::parse($tanggal) : Carbon::now();
 
         $lastInvoice = Invoice::where('tipe_invoice', $tipe)
             ->latest('id')
             ->first();
         
+        $nextNumber = 1;
+        
         if ($lastInvoice) {
             $parts = explode('/', $lastInvoice->nomor_invoice);
-            $nomorPart = explode('.', $parts[1]);
-            $nextNumber = intval($nomorPart[0]) + 1;
-        } else {
-            $nextNumber = 1;
+            if (isset($parts[1])) {
+                $nomorPart = explode('.', $parts[1]);
+                $nextNumber = intval($nomorPart[0]) + 1;
+            }
         }
         
         $formattedDate = $tanggal->format('d.m.Y');
@@ -234,9 +276,6 @@ class InvoiceController extends Controller
         return "{$tipe}/{$nextNumber}.{$formattedDate}";
     }
 
-    /**
-     * Get next invoice number untuk ditampilkan di form
-     */
     private function getNextInvoiceNumber($tipe)
     {
         $lastInvoice = Invoice::where('tipe_invoice', $tipe)
@@ -245,8 +284,10 @@ class InvoiceController extends Controller
         
         if ($lastInvoice) {
             $parts = explode('/', $lastInvoice->nomor_invoice);
-            $nomorPart = explode('.', $parts[1]);
-            return intval($nomorPart[0]) + 1;
+            if (isset($parts[1])) {
+                $nomorPart = explode('.', $parts[1]);
+                return intval($nomorPart[0]) + 1;
+            }
         }
         
         return 1;

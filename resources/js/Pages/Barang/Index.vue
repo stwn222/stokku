@@ -52,7 +52,16 @@ const filteredJenisBarangs = computed(() =>
         )
 );
 
-const comboboxButtonRef = ref(null); // <-- DIUBAH: Menambahkan ref untuk tombol combobox
+const comboboxButtonRef = ref(null);
+
+// =================================================================
+// PERBAIKAN 1: Logika 'if' dipindahkan ke dalam method ini
+// =================================================================
+const handleComboboxFocus = () => {
+    if (comboboxButtonRef.value) {
+        comboboxButtonRef.value.click();
+    }
+};
 
 watch([perPage, search], () => {
     router.get(route('barang.index'), {
@@ -316,7 +325,7 @@ const isLowStock = (barang) => {
                                     :display-value="(jenisId) => jenisBarangs.find(j => j.id === jenisId)?.nama_jenis ?? ''"
                                     placeholder="Pilih atau cari jenis barang"
                                     required
-                                    @focus="if (comboboxButtonRef) comboboxButtonRef.value.click()"
+                                    @focus="handleComboboxFocus"
                                     autocomplete="off"
                                 /> <ComboboxButton ref="comboboxButtonRef" class="absolute inset-y-0 right-0 flex items-center pr-2"> <ChevronsUpDown class="h-5 w-5 text-gray-400" aria-hidden="true" />
                                 </ComboboxButton>

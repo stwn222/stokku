@@ -1,21 +1,106 @@
-<script setup>
+const loadBarangList = async () => {
+    // Jika sudah ada data dari props, skip API call
+    if (initialBarangList && initialBarangList.length > 0) {
+        console.log('✓ Using barang data from props:', initialBarangList.length, 'items');
+        barangList.value = initialBarangList;
+        return;
+    }
+    
+    if (loadingBarang.value) {
+        console.log('Already loading barang, skipping...');
+        return;
+    }
+    
+    loadingBarang.value = true;
+    
+    try {
+        console.log('=== START LOADING BARANG FROM API ===');
+        console.log('Current URL:', window.location.href);
+        console.log('API URL:', '/api/barang');
+        
+        const response = await fetch('/api/barang', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let errorText = '';
+            
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                errorText = JSON.stringify(errorData);
+                console.error('JSON Error response:', errorData);
+            } else {
+                errorText = await response.text();
+                console.error('Text Error response:', errorText);
+            }
+            
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Raw data received:', data);
+        console.log('Data type:', typeof data);
+        console.log('Is array:', Array.isArray(data));
+        
+        if (Array.isArray(data)) {
+            barangList.value = data;
+            console.log('✓ Barang list updated successfully from API!');
+            console.log('✓ Total items:', barangList.value.length);
+            console.log('✓ First item:', barangList.value[0]);
+        } else {
+            console.error('✗ Data is not an array:', data);
+            throw new Error('Data yang diterima bukan array');
+        }
+        
+    } catch (error) {
+        console.error('=== ERROR LOADING BARANG FROM API ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        // Fallback: gunakan data dari props jika API gagal
+        if (initialBarangList && initialBarangList.length > 0) {
+            console.warn('⚠ API failed, using fallback data from props');
+            barangList.value = initialBarangList;
+        } else {
+            alert('Gagal memuat data barang!\n\nError: ' + error.message + '\n\nCek console browser (F12) untuk detail lengkap.');
+            barangList.value = [];
+        }
+    } finally {
+        loadingBarang.value = false;
+        console.log('=== END LOADING BARANG ===');
+        console.log('Final barangList length:', barangList.value.length);
+    }
+};<script setup>
 import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
-import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon } from 'lucide-vue-next';
+import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon, PrinterIcon } from 'lucide-vue-next';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const page = usePage();
 const selectedFilter = ref(page.props.filters?.tipe_invoice || '');
 const invoices = ref(page.props.invoices);
 
-// Modal states
+// PENTING: Ambil barangList dari props (fallback dari API)
+const initialBarangList = page.props.barangList || [];
+
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const currentStep = ref(1);
 const editingInvoice = ref(null);
+const loadingBarang = ref(false);
 
-// Form untuk Create
 const createForm = useForm({
     tipe_invoice: 'MJU',
     nama_client: '',
@@ -27,7 +112,6 @@ const createForm = useForm({
     details: [],
 });
 
-// Form untuk Edit
 const editForm = useForm({
     nama_client: '',
     nomor_client: '',
@@ -40,11 +124,10 @@ const editForm = useForm({
 
 const selectedBarang = ref('');
 const selectedQty = ref(1);
-const barangList = ref([]);
+const barangList = ref(initialBarangList); // Set initial value dari props
 const nextMJUNumber = ref(1);
 const nextBIPNumber = ref(1);
 
-// Computed untuk Create
 const currentInvoiceNumber = computed(() => {
     const number = createForm.tipe_invoice === 'MJU' ? nextMJUNumber.value : nextBIPNumber.value;
     const date = new Date(createForm.tanggal);
@@ -77,7 +160,6 @@ const totalCreate = computed(() => {
     return afterDiskonCreate.value + ppnAmountCreate.value;
 });
 
-// Computed untuk Edit
 const subtotalEdit = computed(() => {
     return editForm.details.reduce((sum, item) => {
         const qty = Number(item.qty) || 0;
@@ -103,35 +185,154 @@ const totalEdit = computed(() => {
     return afterDiskonEdit.value + ppnAmountEdit.value;
 });
 
-// Methods untuk Modal
+const loadBarangList = async () => {
+    if (loadingBarang.value) {
+        console.log('Already loading barang, skipping...');
+        return;
+    }
+    
+    loadingBarang.value = true;
+    barangList.value = [];
+    
+    try {
+        console.log('=== START LOADING BARANG ===');
+        console.log('Current URL:', window.location.href);
+        console.log('API URL:', '/api/barang');
+        
+        const response = await fetch('/api/barang', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let errorText = '';
+            
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                errorText = JSON.stringify(errorData);
+                console.error('JSON Error response:', errorData);
+            } else {
+                errorText = await response.text();
+                console.error('Text Error response:', errorText);
+            }
+            
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Raw data received:', data);
+        console.log('Data type:', typeof data);
+        console.log('Is array:', Array.isArray(data));
+        
+        if (Array.isArray(data)) {
+            barangList.value = data;
+            console.log('✓ Barang list updated successfully!');
+            console.log('✓ Total items:', barangList.value.length);
+            console.log('✓ First item:', barangList.value[0]);
+        } else {
+            console.error('✗ Data is not an array:', data);
+            throw new Error('Data yang diterima bukan array');
+        }
+        
+    } catch (error) {
+        console.error('=== ERROR LOADING BARANG ===');
+        console.error('Error type:', error.constructor.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        alert('Gagal memuat data barang!\n\nError: ' + error.message + '\n\nCek console browser (F12) untuk detail lengkap.');
+        barangList.value = [];
+    } finally {
+        loadingBarang.value = false;
+        console.log('=== END LOADING BARANG ===');
+    }
+};
+
+const loadNextNumbers = async () => {
+    try {
+        const [responseMJU, responseBIP] = await Promise.all([
+            fetch('/api/invoice-next-number/MJU', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            }),
+            fetch('/api/invoice-next-number/BIP', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+        ]);
+        
+        if (responseMJU.ok) {
+            const dataMJU = await responseMJU.json();
+            nextMJUNumber.value = dataMJU.next_number || 1;
+        }
+        
+        if (responseBIP.ok) {
+            const dataBIP = await responseBIP.json();
+            nextBIPNumber.value = dataBIP.next_number || 1;
+        }
+    } catch (err) {
+        console.log('Error loading next numbers:', err);
+        nextMJUNumber.value = 1;
+        nextBIPNumber.value = 1;
+    }
+};
+
 const openCreateModal = async () => {
     try {
-        const response = await fetch(route('invoice.create'));
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+        showCreateModal.value = true;
         
-        // Ambil data dari halaman create
-        const pageData = window.Inertia?.page?.props || page.props;
+        console.log('Modal opened. Initial barangList length:', barangList.value.length);
         
-        // Load barang list
-        await loadBarangList();
+        // Load data hanya jika belum ada
+        if (barangList.value.length === 0) {
+            console.log('Loading barang data...');
+            await Promise.all([
+                loadBarangList(),
+                loadNextNumbers()
+            ]);
+        } else {
+            console.log('Using existing barang data');
+            await loadNextNumbers();
+        }
         
+        // Reset form
         createForm.reset();
         createForm.tipe_invoice = 'MJU';
         createForm.tanggal = new Date().toISOString().split('T')[0];
         createForm.details = [];
         currentStep.value = 1;
-        showCreateModal.value = true;
+        
+        console.log('✓ Modal ready. Barang count:', barangList.value.length);
     } catch (error) {
-        console.error('Error:', error);
-        window.location.href = route('invoice.create');
+        console.error('Error opening modal:', error);
+        alert('Gagal membuka modal: ' + error.message);
+        showCreateModal.value = false;
     }
 };
 
 const openEditModal = async (invoice) => {
     try {
-        await loadBarangList();
+        // Load barang jika belum ada
+        if (barangList.value.length === 0) {
+            await loadBarangList();
+        }
         
         editingInvoice.value = invoice;
         editForm.nama_client = invoice.nama_client;
@@ -149,9 +350,10 @@ const openEditModal = async (invoice) => {
         }));
         
         showEditModal.value = true;
+        console.log('✓ Edit modal ready. Barang count:', barangList.value.length);
     } catch (error) {
         console.error('Error:', error);
-        window.location.href = route('invoice.edit', invoice.id);
+        alert('Gagal membuka modal edit: ' + error.message);
     }
 };
 
@@ -161,6 +363,7 @@ const closeCreateModal = () => {
     currentStep.value = 1;
     selectedBarang.value = '';
     selectedQty.value = 1;
+    // Jangan reset barangList agar tidak perlu load ulang
 };
 
 const closeEditModal = () => {
@@ -169,20 +372,9 @@ const closeEditModal = () => {
     editingInvoice.value = null;
     selectedBarang.value = '';
     selectedQty.value = 1;
+    // Jangan reset barangList agar tidak perlu load ulang
 };
 
-const loadBarangList = async () => {
-    try {
-        const response = await axios.get('/api/barang');
-        barangList.value = response.data;
-    } catch (error) {
-        const response = await fetch(route('invoice.create'));
-        const text = await response.text();
-        barangList.value = [];
-    }
-};
-
-// Methods untuk Create
 const addBarangCreate = () => {
     if (!selectedBarang.value || selectedQty.value < 1) {
         alert('Pilih barang dan masukkan jumlah yang valid');
@@ -190,7 +382,21 @@ const addBarangCreate = () => {
     }
 
     const barang = barangList.value.find(b => b.id == selectedBarang.value);
+    if (!barang) {
+        alert('Barang tidak ditemukan');
+        return;
+    }
+
+    // Hitung total qty yang sudah ada di details untuk barang ini
     const existingDetail = createForm.details.find(d => d.barang_id == selectedBarang.value);
+    const currentQtyInDetails = existingDetail ? existingDetail.qty : 0;
+    const totalQty = currentQtyInDetails + parseInt(selectedQty.value);
+
+    // Validasi stok
+    if (totalQty > barang.stok) {
+        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nYang sudah ditambahkan: ${currentQtyInDetails}\nYang akan ditambahkan: ${selectedQty.value}\nTotal: ${totalQty}\n\nSilakan kurangi jumlah barang.`);
+        return;
+    }
 
     if (existingDetail) {
         existingDetail.qty += parseInt(selectedQty.value);
@@ -201,6 +407,7 @@ const addBarangCreate = () => {
             nama_barang: barang.nama_barang,
             qty: parseInt(selectedQty.value),
             harga: Number(barang.harga_jual) || 0,
+            stok: barang.stok, // Simpan info stok
         });
     }
 
@@ -209,9 +416,21 @@ const addBarangCreate = () => {
 };
 
 const updateQtyCreate = (index, newQty) => {
-    if (newQty > 0) {
-        createForm.details[index].qty = newQty;
+    if (newQty < 1) return;
+    
+    const detail = createForm.details[index];
+    const barang = barangList.value.find(b => b.id == detail.barang_id);
+    
+    if (barang && newQty > barang.stok) {
+        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nJumlah yang diminta: ${newQty}\n\nSilakan kurangi jumlah.`);
+        return;
     }
+    
+    createForm.details[index].qty = newQty;
+};
+
+const removeBarangCreate = (index) => {
+    createForm.details.splice(index, 1);
 };
 
 const nextStepCreate = () => {
@@ -254,7 +473,6 @@ const submitCreate = () => {
     });
 };
 
-// Methods untuk Edit
 const addBarangEdit = () => {
     if (!selectedBarang.value || selectedQty.value < 1) {
         alert('Pilih barang dan masukkan jumlah yang valid');
@@ -262,7 +480,21 @@ const addBarangEdit = () => {
     }
 
     const barang = barangList.value.find(b => b.id == selectedBarang.value);
+    if (!barang) {
+        alert('Barang tidak ditemukan');
+        return;
+    }
+
+    // Hitung total qty yang sudah ada di details untuk barang ini
     const existingDetail = editForm.details.find(d => d.barang_id == selectedBarang.value);
+    const currentQtyInDetails = existingDetail ? existingDetail.qty : 0;
+    const totalQty = currentQtyInDetails + parseInt(selectedQty.value);
+
+    // Validasi stok
+    if (totalQty > barang.stok) {
+        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nYang sudah ditambahkan: ${currentQtyInDetails}\nYang akan ditambahkan: ${selectedQty.value}\nTotal: ${totalQty}\n\nSilakan kurangi jumlah barang.`);
+        return;
+    }
 
     if (existingDetail) {
         existingDetail.qty += parseInt(selectedQty.value);
@@ -273,6 +505,7 @@ const addBarangEdit = () => {
             nama_barang: barang.nama_barang,
             qty: parseInt(selectedQty.value),
             harga: Number(barang.harga_jual) || 0,
+            stok: barang.stok, // Simpan info stok
         });
     }
 
@@ -285,9 +518,17 @@ const removeBarangEdit = (index) => {
 };
 
 const updateQtyEdit = (index, newQty) => {
-    if (newQty > 0) {
-        editForm.details[index].qty = newQty;
+    if (newQty < 1) return;
+    
+    const detail = editForm.details[index];
+    const barang = barangList.value.find(b => b.id == detail.barang_id);
+    
+    if (barang && newQty > barang.stok) {
+        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nJumlah yang diminta: ${newQty}\n\nSilakan kurangi jumlah.`);
+        return;
     }
+    
+    editForm.details[index].qty = newQty;
 };
 
 const submitEdit = () => {
@@ -304,7 +545,6 @@ const submitEdit = () => {
     });
 };
 
-// Methods untuk Index
 const handleFilter = () => {
     const params = selectedFilter.value ? { tipe_invoice: selectedFilter.value } : {};
     router.get(route('invoice.index', params), {}, { preserveState: true });
@@ -313,6 +553,10 @@ const handleFilter = () => {
 const handlePrint = () => {
     const params = selectedFilter.value ? { tipe_invoice: selectedFilter.value } : {};
     window.open(route('invoice.print', params), '_blank');
+};
+
+const printSingleInvoice = (invoiceId) => {
+    window.open(route('invoice.print-single', invoiceId), '_blank');
 };
 
 const deleteInvoice = (invoiceId, invoiceNumber) => {
@@ -365,7 +609,7 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     @click="handlePrint"
                     class="px-8 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition font-medium"
                 >
-                    Cetak
+                    Cetak Semua
                 </button>
             </div>
         </div>
@@ -415,6 +659,9 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </td>
                             <td class="px-6 py-3 text-center">
                                 <div class="flex justify-center gap-2">
+                                    <button @click="printSingleInvoice(invoice.id)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
+                                        <PrinterIcon :size="18" />
+                                    </button>
                                     <button @click="openEditModal(invoice)" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
                                         <Edit2Icon :size="18" />
                                     </button>
@@ -454,92 +701,57 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
 
                 <div class="inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-lg shadow-xl">
                     <div class="flex items-center justify-between px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">Entri Invoice Baru</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Entri Invoice Baru - Step {{ currentStep }} of 3</h3>
                         <button @click="closeCreateModal" class="text-gray-400 hover:text-gray-600">
                             <XIcon :size="24" />
                         </button>
                     </div>
 
                     <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
-                        <!-- STEP 1: Data Client -->
+                        <!-- STEP 1 -->
                         <div v-show="currentStep === 1">
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nama Client:</label>
-                                    <input
-                                        v-model="createForm.nama_client"
-                                        type="text"
-                                        placeholder="Masukan Nama Client..."
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="createForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Client:</label>
-                                    <input
-                                        v-model="createForm.nomor_client"
-                                        type="text"
-                                        placeholder="Masukan Nomor Client..."
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="createForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
-                                    <input
-                                        v-model="createForm.tanggal"
-                                        type="date"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="createForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Invoice:</label>
-                                    <input
-                                        :value="currentInvoiceNumber"
-                                        type="text"
-                                        readonly
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-                                    />
+                                    <input :value="currentInvoiceNumber" type="text" readonly class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100" />
                                 </div>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-900 mb-2">Alamat Client:</label>
-                                <input
-                                    v-model="createForm.alamat_client"
-                                    type="text"
-                                    placeholder="Masukan Alamat Client..."
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                                <input v-model="createForm.alamat_client" type="text" placeholder="Masukan Alamat Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
                             <div class="grid grid-cols-3 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Diskon (%):</label>
-                                    <input
-                                        v-model.number="createForm.diskon"
-                                        type="number"
-                                        placeholder="(Opsional)"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model.number="createForm.diskon" type="number" placeholder="(Opsional)" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">PPN:</label>
-                                    <select
-                                        v-model="createForm.ppn"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
+                                    <select v-model="createForm.ppn" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         <option :value="false">Tidak</option>
                                         <option :value="true">Ya (11%)</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Tipe Invoice</label>
-                                    <select
-                                        v-model="createForm.tipe_invoice"
-                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
+                                    <select v-model="createForm.tipe_invoice" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         <option value="MJU">MJU</option>
                                         <option value="BIP">BIP</option>
                                     </select>
@@ -547,83 +759,89 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </div>
                         </div>
 
-                        <!-- STEP 2: Pilih Barang -->
+                        <!-- STEP 2 -->
                         <div v-show="currentStep === 2">
-                            <div class="space-y-4 mb-6">
-                                <div v-for="(detail, index) in createForm.details" :key="index" class="grid grid-cols-2 gap-6 items-end">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-900 mb-2">Nama Barang:</label>
-                                        <input
-                                            :value="detail.nama_barang"
-                                            type="text"
-                                            disabled
-                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50"
-                                        />
-                                    </div>
-                                    <div class="flex items-end gap-4">
-                                        <div class="flex-1">
-                                            <label class="block text-sm font-medium text-gray-900 mb-2">Qty:</label>
-                                            <input
-                                                :value="detail.qty"
-                                                type="text"
-                                                disabled
-                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            @click="updateQtyCreate(index, detail.qty + 1)"
-                                            class="w-10 h-10 flex items-center justify-center border-2 border-gray-900 rounded-full hover:bg-gray-100 transition"
-                                        >
-                                            <PlusIcon :size="20" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            @click="updateQtyCreate(index, detail.qty - 1)"
-                                            class="w-10 h-10 flex items-center justify-center border-2 border-gray-900 rounded-full hover:bg-gray-100 transition"
-                                        >
-                                            <MinusIcon :size="20" />
-                                        </button>
-                                    </div>
+                            <div v-if="loadingBarang" class="text-center py-4">
+                                <p class="text-gray-500">Loading data barang...</p>
+                            </div>
+
+                            <div v-else>
+                                <div class="mb-4 max-h-60 overflow-y-auto">
+                                    <table class="w-full border-collapse">
+                                        <thead class="bg-gray-50 sticky top-0">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b">Nama Barang</th>
+                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Qty</th>
+                                                <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b">Harga</th>
+                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-if="createForm.details.length === 0">
+                                                <td colspan="4" class="px-3 py-3 text-center text-gray-500 text-sm">Belum ada barang</td>
+                                            </tr>
+                                            <tr v-for="(detail, index) in createForm.details" :key="index" class="border-b hover:bg-gray-50">
+                                                <td class="px-3 py-2 text-sm text-gray-900">{{ detail.nama_barang }}</td>
+                                                <td class="px-3 py-2 text-center">
+                                                    <div class="flex items-center justify-center gap-1">
+                                                        <button type="button" @click="updateQtyCreate(index, detail.qty - 1)" class="p-1 text-red-500 hover:bg-red-50 rounded">
+                                                            <MinusIcon :size="14" />
+                                                        </button>
+                                                        <input :value="detail.qty" type="number" min="1" @change="(e) => updateQtyCreate(index, parseInt(e.target.value))" class="w-12 px-1 py-1 border border-gray-300 rounded text-center text-sm" />
+                                                        <button type="button" @click="updateQtyCreate(index, detail.qty + 1)" class="p-1 text-blue-500 hover:bg-blue-50 rounded">
+                                                            <PlusIcon :size="14" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-2 text-right text-sm text-gray-900">Rp {{ Number(detail.harga).toLocaleString('id-ID') }}</td>
+                                                <td class="px-3 py-2 text-center">
+                                                    <button type="button" @click="removeBarangCreate(index)" class="p-1 text-red-500 hover:bg-red-50 rounded">
+                                                        <Trash2Icon :size="16" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-6 items-end pt-4 border-t">
+                                <div class="grid grid-cols-3 gap-4 pt-4 border-t">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-900 mb-2">Nama Barang:</label>
-                                        <select
-                                            v-model="selectedBarang"
-                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        >
-                                            <option value="">Pilih Barang...</option>
-                                            <option v-for="barang in barangList" :key="barang.id" :value="barang.id">
-                                                {{ barang.nama_barang }}
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
+                                        <select v-model="selectedBarang" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">-- Pilih Barang --</option>
+                                            <option 
+                                                v-for="barang in barangList" 
+                                                :key="barang.id" 
+                                                :value="barang.id"
+                                                :disabled="barang.stok <= 0"
+                                            >
+                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }} (Stok: {{ barang.stok }})
                                             </option>
                                         </select>
+                                        <p v-if="barangList.length === 0 && !loadingBarang" class="text-xs text-red-500 mt-1">
+                                            Tidak ada data barang
+                                        </p>
                                     </div>
-                                    <div class="flex items-end gap-4">
-                                        <div class="flex-1">
-                                            <label class="block text-sm font-medium text-gray-900 mb-2">Qty:</label>
-                                            <input
-                                                v-model.number="selectedQty"
-                                                type="number"
-                                                min="1"
-                                                placeholder="1"
-                                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            @click="addBarangCreate"
-                                            class="w-10 h-10 flex items-center justify-center border-2 border-gray-900 rounded-full hover:bg-gray-100 transition"
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                                        <input v-model.number="selectedQty" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button 
+                                            type="button" 
+                                            @click="addBarangCreate" 
+                                            :disabled="barangList.length === 0"
+                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <PlusIcon :size="20" />
+                                            <PlusIcon :size="16" />
+                                            Tambah
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- STEP 3: Summary -->
+                        <!-- STEP 3 -->
                         <div v-show="currentStep === 3">
                             <div class="space-y-3 mb-6 pb-6 border-b">
                                 <div class="flex justify-between text-gray-700">
@@ -652,37 +870,10 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     </div>
 
                     <div class="flex gap-4 px-6 py-4 border-t bg-gray-50">
-                        <button
-                            v-if="currentStep > 1"
-                            type="button"
-                            @click="prevStepCreate"
-                            class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium"
-                        >
-                            Kembali
-                        </button>
-                        <button
-                            v-if="currentStep < 3"
-                            type="button"
-                            @click="nextStepCreate"
-                            class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium"
-                        >
-                            Selanjutnya
-                        </button>
-                        <button
-                            v-if="currentStep === 3"
-                            type="button"
-                            @click="submitCreate"
-                            class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium"
-                        >
-                            Simpan
-                        </button>
-                        <button
-                            type="button"
-                            @click="closeCreateModal"
-                            class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium"
-                        >
-                            Batal
-                        </button>
+                        <button v-if="currentStep > 1" type="button" @click="prevStepCreate" class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium">Kembali</button>
+                        <button v-if="currentStep < 3" type="button" @click="nextStepCreate" class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium">Selanjutnya</button>
+                        <button v-if="currentStep === 3" type="button" @click="submitCreate" class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium">Simpan</button>
+                        <button type="button" @click="closeCreateModal" class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium">Batal</button>
                     </div>
                 </div>
             </div>
@@ -702,100 +893,58 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     </div>
 
                     <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
-                        <!-- Data Client -->
                         <div class="mb-6">
                             <h4 class="font-semibold text-gray-900 mb-4">Data Client</h4>
                             
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Nama Client</label>
-                                    <input 
-                                        v-model="editForm.nama_client"
-                                        type="text"
-                                        placeholder="Masukan Nama Client..."
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="editForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Client</label>
-                                    <input 
-                                        v-model="editForm.nomor_client"
-                                        type="text"
-                                        placeholder="Masukan Nomor Client..."
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="editForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
-                                    <input 
-                                        v-model="editForm.tanggal"
-                                        type="date"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model="editForm.tanggal" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Invoice</label>
-                                    <input 
-                                        type="text"
-                                        :value="editingInvoice?.nomor_invoice"
-                                        disabled
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
-                                    />
+                                    <input type="text" :value="editingInvoice?.nomor_invoice" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600" />
                                 </div>
                             </div>
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Client</label>
-                                <textarea 
-                                    v-model="editForm.alamat_client"
-                                    placeholder="Masukan Alamat..."
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    rows="3"
-                                ></textarea>
+                                <textarea v-model="editForm.alamat_client" placeholder="Masukan Alamat..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3"></textarea>
                             </div>
 
                             <div class="grid grid-cols-3 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Diskon (%)</label>
-                                    <input 
-                                        v-model.number="editForm.diskon"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        placeholder="0"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model.number="editForm.diskon" type="number" min="0" max="100" placeholder="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">PPN</label>
-                                    <select 
-                                        v-model="editForm.ppn"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
+                                    <select v-model="editForm.ppn" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         <option :value="false">Tidak</option>
                                         <option :value="true">Ya (11%)</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Invoice</label>
-                                    <input 
-                                        type="text"
-                                        :value="editingInvoice?.tipe_invoice"
-                                        disabled
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
-                                    />
+                                    <input type="text" :value="editingInvoice?.tipe_invoice" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600" />
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Pilih Barang -->
                         <div class="mb-6">
                             <h4 class="font-semibold text-gray-900 mb-4">Daftar Barang</h4>
                             
-                            <!-- Daftar barang yang sudah dipilih -->
                             <div class="mb-4 max-h-60 overflow-y-auto">
                                 <table class="w-full border-collapse">
                                     <thead class="bg-gray-50 sticky top-0">
@@ -814,38 +963,18 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                                             <td class="px-3 py-2 text-sm text-gray-900">{{ detail.nama_barang }}</td>
                                             <td class="px-3 py-2 text-center">
                                                 <div class="flex items-center justify-center gap-1">
-                                                    <button 
-                                                        type="button"
-                                                        @click="updateQtyEdit(index, detail.qty - 1)"
-                                                        class="p-1 text-red-500 hover:bg-red-50 rounded"
-                                                    >
+                                                    <button type="button" @click="updateQtyEdit(index, detail.qty - 1)" class="p-1 text-red-500 hover:bg-red-50 rounded">
                                                         <MinusIcon :size="14" />
                                                     </button>
-                                                    <input 
-                                                        :value="detail.qty"
-                                                        type="number"
-                                                        min="1"
-                                                        @change="(e) => updateQtyEdit(index, parseInt(e.target.value))"
-                                                        class="w-12 px-1 py-1 border border-gray-300 rounded text-center text-sm"
-                                                    />
-                                                    <button 
-                                                        type="button"
-                                                        @click="updateQtyEdit(index, detail.qty + 1)"
-                                                        class="p-1 text-blue-500 hover:bg-blue-50 rounded"
-                                                    >
+                                                    <input :value="detail.qty" type="number" min="1" @change="(e) => updateQtyEdit(index, parseInt(e.target.value))" class="w-12 px-1 py-1 border border-gray-300 rounded text-center text-sm" />
+                                                    <button type="button" @click="updateQtyEdit(index, detail.qty + 1)" class="p-1 text-blue-500 hover:bg-blue-50 rounded">
                                                         <PlusIcon :size="14" />
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td class="px-3 py-2 text-right text-sm text-gray-900">
-                                                Rp {{ Number(detail.harga).toLocaleString('id-ID') }}
-                                            </td>
+                                            <td class="px-3 py-2 text-right text-sm text-gray-900">Rp {{ Number(detail.harga).toLocaleString('id-ID') }}</td>
                                             <td class="px-3 py-2 text-center">
-                                                <button 
-                                                    type="button"
-                                                    @click="removeBarangEdit(index)"
-                                                    class="p-1 text-red-500 hover:bg-red-50 rounded"
-                                                >
+                                                <button type="button" @click="removeBarangEdit(index)" class="p-1 text-red-500 hover:bg-red-50 rounded">
                                                     <Trash2Icon :size="16" />
                                                 </button>
                                             </td>
@@ -854,36 +983,22 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                                 </table>
                             </div>
 
-                            <!-- Form tambah barang -->
                             <div class="grid grid-cols-3 gap-4 pt-4 border-t">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
-                                    <select 
-                                        v-model="selectedBarang"
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="">-- Pilih --</option>
+                                    <select v-model="selectedBarang" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">-- Pilih Barang --</option>
                                         <option v-for="barang in barangList" :key="barang.id" :value="barang.id">
-                                            {{ barang.nama_barang }}
+                                            {{ barang.nama_barang }} (Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }})
                                         </option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
-                                    <input 
-                                        v-model.number="selectedQty"
-                                        type="number"
-                                        min="1"
-                                        placeholder="1"
-                                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    />
+                                    <input v-model.number="selectedQty" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div class="flex items-end">
-                                    <button 
-                                        type="button"
-                                        @click="addBarangEdit"
-                                        class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm"
-                                    >
+                                    <button type="button" @click="addBarangEdit" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm">
                                         <PlusIcon :size="16" />
                                         Tambah
                                     </button>
@@ -891,7 +1006,6 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </div>
                         </div>
 
-                        <!-- Summary -->
                         <div class="border-t pt-4">
                             <h4 class="font-semibold text-gray-900 mb-4">Summary</h4>
                             <div class="space-y-2 mb-4">
@@ -921,21 +1035,8 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     </div>
 
                     <div class="flex gap-4 px-6 py-4 border-t bg-gray-50">
-                        <button 
-                            type="button"
-                            @click="submitEdit"
-                            :disabled="editForm.processing"
-                            class="flex-1 px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-semibold disabled:opacity-50"
-                        >
-                            Perbarui
-                        </button>
-                        <button 
-                            type="button"
-                            @click="closeEditModal"
-                            class="flex-1 px-6 py-2 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-semibold"
-                        >
-                            Batal
-                        </button>
+                        <button type="button" @click="submitEdit" :disabled="editForm.processing" class="flex-1 px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-semibold disabled:opacity-50">Perbarui</button>
+                        <button type="button" @click="closeEditModal" class="flex-1 px-6 py-2 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-semibold">Batal</button>
                     </div>
                 </div>
             </div>

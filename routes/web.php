@@ -82,6 +82,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('invoice.update');
     Route::delete('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoice.destroy');
     Route::get('/invoice/print', [App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
+    Route::get('/invoice/{id}/print-single', [App\Http\Controllers\InvoiceController::class, 'printSingle'])->name('invoice.print-single');
+    Route::get('/api/invoice-next-number/{tipe}', function($tipe) {
+    $lastInvoice = \App\Models\Invoice::where('tipe_invoice', $tipe)->latest('id')->first();
+    
+    if ($lastInvoice) {
+        $parts = explode('/', $lastInvoice->nomor_invoice);
+        $nomorPart = explode('.', $parts[1]);
+        $nextNumber = intval($nomorPart[0]) + 1;
+    } else {
+        $nextNumber = 1;
+    }
+    
+    return response()->json(['next_number' => $nextNumber]);
+})->middleware('auth');
 
     // User Management Routes
     Route::get('/user-management', [UserManagementController::class, 'index'])->name('user-management.index');
