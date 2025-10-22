@@ -23,7 +23,6 @@ class InvoiceController extends Controller
         
         $invoices = $query->paginate(10);
         
-        // Load daftar barang untuk dropdown (include stok)
         $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
             ->orderBy('nama_barang', 'asc')
             ->get();
@@ -69,15 +68,6 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            // Validasi stok untuk setiap barang
-            foreach ($validated['details'] as $detail) {
-                $barang = Barang::findOrFail($detail['barang_id']);
-                
-                if ($detail['qty'] > $barang->stok) {
-                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
-                }
-            }
-
             $nomorInvoice = $this->generateInvoiceNumber(
                 $validated['tipe_invoice'], 
                 $validated['tanggal']
@@ -102,10 +92,6 @@ class InvoiceController extends Controller
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
                 ]);
-                
-                // Kurangi stok barang
-                $barang = Barang::findOrFail($detail['barang_id']);
-                $barang->decrement('stok', $detail['qty']);
             }
 
             DB::commit();
@@ -149,23 +135,6 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            // Kembalikan stok dari detail lama
-            foreach ($invoice->details as $oldDetail) {
-                $barang = Barang::find($oldDetail->barang_id);
-                if ($barang) {
-                    $barang->increment('stok', $oldDetail->qty);
-                }
-            }
-
-            // Validasi stok untuk detail baru
-            foreach ($validated['details'] as $detail) {
-                $barang = Barang::findOrFail($detail['barang_id']);
-                
-                if ($detail['qty'] > $barang->stok) {
-                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
-                }
-            }
-
             $invoice->update([
                 'nama_client' => $validated['nama_client'],
                 'nomor_client' => $validated['nomor_client'],
@@ -175,10 +144,8 @@ class InvoiceController extends Controller
                 'ppn' => $validated['ppn'] ?? false,
             ]);
 
-            // Hapus detail lama
             $invoice->details()->delete();
 
-            // Simpan detail baru dan kurangi stok
             foreach ($validated['details'] as $detail) {
                 InvoiceDetail::create([
                     'invoice_id' => $invoice->id,
@@ -186,9 +153,6 @@ class InvoiceController extends Controller
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
                 ]);
-                
-                $barang = Barang::findOrFail($detail['barang_id']);
-                $barang->decrement('stok', $detail['qty']);
             }
 
             DB::commit();
@@ -207,21 +171,13 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
             
-            // Kembalikan stok barang
-            foreach ($invoice->details as $detail) {
-                $barang = Barang::find($detail->barang_id);
-                if ($barang) {
-                    $barang->increment('stok', $detail->qty);
-                }
-            }
-            
             $nomorInvoice = $invoice->nomor_invoice;
             $invoice->delete();
 
             DB::commit();
 
             return redirect()->route('invoice.index')
-                ->with('success', 'Invoice ' . $nomorInvoice . ' berhasil dihapus dan stok dikembalikan');
+                ->with('success', 'Invoice ' . $nomorInvoice . ' berhasil dihapus');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -249,6 +205,15 @@ class InvoiceController extends Controller
         $invoice = Invoice::with(['user', 'details.barang'])->findOrFail($id);
         
         return Inertia::render('Invoice/PrintSingle', [
+            'invoice' => $invoice,
+        ]);
+    }
+
+    public function printSingleA5($id)
+    {
+        $invoice = Invoice::with(['user', 'details.barang'])->findOrFail($id);
+        
+        return Inertia::render('Invoice/PrintSingleA5', [
             'invoice' => $invoice,
         ]);
     }

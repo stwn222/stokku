@@ -1,11 +1,8 @@
 <script setup>
-// computed ditambahkan dari 'vue'
 import { ref, watch, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-// Ikon Check dan ChevronsUpDown ditambahkan
 import { Home, ChevronRight, Pencil, Trash2, Plus, Check, ChevronsUpDown } from 'lucide-vue-next';
-// Komponen Combobox ditambahkan dari Headless UI
 import {
   Combobox,
   ComboboxButton,
@@ -37,9 +34,24 @@ const form = ref({
     harga_jual: 0,
 });
 
-const previewIdBarang = ref('');
+const formattedHargaJual = computed({
+    get() {
+        if (form.value.harga_jual === null || form.value.harga_jual === '') {
+            return '';
+        }
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+        }).format(form.value.harga_jual);
+    },
+    set(newValue) {
+        const numericValue = parseInt(newValue.replace(/[^0-9]/g, ''), 10);
+        form.value.harga_jual = isNaN(numericValue) ? 0 : numericValue;
+    }
+});
 
-// --- State untuk Searchable Dropdown ---
+const previewIdBarang = ref('');
 const jenisBarangQuery = ref('');
 const filteredJenisBarangs = computed(() =>
     jenisBarangQuery.value === ''
@@ -54,9 +66,6 @@ const filteredJenisBarangs = computed(() =>
 
 const comboboxButtonRef = ref(null);
 
-// =================================================================
-// PERBAIKAN 1: Logika 'if' dipindahkan ke dalam method ini
-// =================================================================
 const handleComboboxFocus = () => {
     if (comboboxButtonRef.value) {
         comboboxButtonRef.value.click();
@@ -73,7 +82,6 @@ watch([perPage, search], () => {
     });
 });
 
-// Watch jenis barang selection to preview ID
 watch(() => form.value.jenis_barang_id, async (newVal) => {
     if (newVal && modalMode.value === 'create') {
         const jenisBarang = props.jenisBarangs.find(jb => jb.id == newVal);
@@ -86,7 +94,7 @@ watch(() => form.value.jenis_barang_id, async (newVal) => {
                 console.error('Error fetching next ID:', error);
             }
         }
-    } else if (!newVal) { // Reset preview if selection is cleared
+    } else if (!newVal) {
         previewIdBarang.value = '';
     }
 });
@@ -104,7 +112,7 @@ const openCreateModal = () => {
         harga_jual: 0,
     };
     previewIdBarang.value = '';
-    jenisBarangQuery.value = ''; // Reset query pencarian
+    jenisBarangQuery.value = '';
     showModal.value = true;
 };
 
@@ -121,7 +129,7 @@ const openEditModal = (barang) => {
         harga_jual: barang.harga_jual,
     };
     previewIdBarang.value = barang.id_barang;
-    jenisBarangQuery.value = ''; // Reset query pencarian
+    jenisBarangQuery.value = '';
     showModal.value = true;
 };
 
@@ -164,7 +172,7 @@ const getSatuanNama = (barang) => {
 };
 
 const isLowStock = (barang) => {
-    return barang.stok < (barang.stok_minimum || 10); // Gunakan stok_minimum jika ada
+    return barang.stok < (barang.stok_minimum || 10);
 };
 </script>
 
@@ -300,8 +308,7 @@ const isLowStock = (barang) => {
                     </tbody>
                 </table>
             </div>
-
-            </div>
+        </div>
 
         <div 
             v-if="showModal"
@@ -314,7 +321,6 @@ const isLowStock = (barang) => {
                 </h3>
 
                 <form @submit.prevent="submitForm" class="space-y-4">
-                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang</label>
                         <Combobox v-model="form.jenis_barang_id" as="div" class="relative">
@@ -327,7 +333,9 @@ const isLowStock = (barang) => {
                                     required
                                     @focus="handleComboboxFocus"
                                     autocomplete="off"
-                                /> <ComboboxButton ref="comboboxButtonRef" class="absolute inset-y-0 right-0 flex items-center pr-2"> <ChevronsUpDown class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                />
+                                <ComboboxButton ref="comboboxButtonRef" class="absolute inset-y-0 right-0 flex items-center pr-2">
+                                    <ChevronsUpDown class="h-5 w-5 text-gray-400" aria-hidden="true" />
                                 </ComboboxButton>
                             </div>
                             <TransitionRoot
@@ -435,12 +443,11 @@ const isLowStock = (barang) => {
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual</label>
                         <input 
-                            v-model="form.harga_jual"
-                            type="number"
+                            v-model="formattedHargaJual"
+                            type="text"
                             required
-                            min="0"
                             class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="0"
+                            placeholder="Rp 0"
                         />
                     </div>
 

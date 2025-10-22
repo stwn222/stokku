@@ -72,8 +72,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="print-container">
-        <div class="invoice-page">
+    <div class="print-container-a5">
+        <div class="invoice-page-a5">
             <!-- Header dengan alamat dan INVOICE sejajar -->
             <div class="header-section">
                 <div class="company-info">
@@ -155,7 +155,7 @@ onMounted(() => {
                         <td class="td-right">{{ Number(detail.harga).toLocaleString('id-ID') }}</td>
                         <td class="td-right">{{ (detail.qty * detail.harga).toLocaleString('id-ID') }}</td>
                     </tr>
-                    <tr v-for="i in Math.max(0, 10 - invoice.details.length)" :key="'empty-' + i" class="empty-row">
+                    <tr v-for="i in Math.max(0, 7 - invoice.details.length)" :key="'empty-' + i" class="empty-row">
                         <td>&nbsp;</td>
                         <td>&nbsp;</td>
                         <td>&nbsp;</td>
@@ -199,7 +199,7 @@ onMounted(() => {
 
 <style scoped>
 @page {
-    size: A4;
+    size: A5 landscape;
     margin: 0;
 }
 
@@ -209,18 +209,18 @@ onMounted(() => {
     box-sizing: border-box;
 }
 
-.print-container {
+.print-container-a5 {
     width: 210mm;
-    min-height: 297mm;
+    min-height: 148mm;
     margin: 0 auto;
     background: white;
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.invoice-page {
+.invoice-page-a5 {
     width: 100%;
-    height: 297mm;
-    padding: 15mm 15mm 10mm 15mm;
+    height: 148mm;
+    padding: 8mm 10mm;
     position: relative;
 }
 
@@ -229,7 +229,7 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 }
 
 .company-info {
@@ -237,14 +237,14 @@ onMounted(() => {
 }
 
 .company-name {
-    font-size: 11.5px;
+    font-size: 9px;
     font-weight: bold;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .company-address {
-    font-size: 9px;
-    line-height: 1.4;
+    font-size: 7px;
+    line-height: 1.3;
 }
 
 .invoice-title-section {
@@ -253,29 +253,29 @@ onMounted(() => {
 }
 
 .invoice-title {
-    font-size: 50px;
+    font-size: 35px;
     font-weight: bold;
-    letter-spacing: 12px;
+    letter-spacing: 8px;
     line-height: 1;
 }
 
 /* GARIS PEMBATAS */
 .divider-line {
     width: 100%;
-    height: 2px;
+    height: 1.5px;
     background-color: #000;
-    margin: 8px 0;
+    margin: 5px 0;
 }
 
 /* NOMOR INVOICE DAN TANGGAL DI TENGAH */
 .invoice-meta-center {
     text-align: center;
-    font-size: 10px;
-    margin: 12px 0;
+    font-size: 8px;
+    margin: 8px 0;
 }
 
 .meta-divider {
-    margin: 0 8px;
+    margin: 0 6px;
     font-weight: bold;
 }
 
@@ -283,36 +283,36 @@ onMounted(() => {
 .info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    margin: 15px 0;
+    gap: 15px;
+    margin: 10px 0;
     position: relative;
     z-index: 2;
 }
 
 .section-title {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .section-content {
-    font-size: 9px;
-    line-height: 1.5;
+    font-size: 7px;
+    line-height: 1.4;
 }
 
 .client-name {
     font-weight: bold;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 .payment-line {
     display: flex;
-    gap: 4px;
-    margin-bottom: 2px;
+    gap: 3px;
+    margin-bottom: 1px;
 }
 
 .pay-label {
-    min-width: 75px;
+    min-width: 60px;
 }
 
 .pay-value strong {
@@ -325,8 +325,8 @@ onMounted(() => {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 450px;
-    height: 450px;
+    width: 300px;
+    height: 300px;
     opacity: 0.08;
     z-index: 1;
     pointer-events: none;
@@ -345,7 +345,7 @@ onMounted(() => {
 .invoice-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     position: relative;
     z-index: 2;
     background: white;
@@ -354,12 +354,12 @@ onMounted(() => {
 .invoice-table th,
 .invoice-table td {
     border: 1px solid #000;
-    padding: 6px 8px;
+    padding: 4px 6px;
     background: white;
 }
 
 .invoice-table th {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
     text-align: center;
 }
@@ -381,7 +381,7 @@ onMounted(() => {
 }
 
 .invoice-table td {
-    font-size: 9.5px;
+    font-size: 7.5px;
 }
 
 .td-center {
@@ -397,14 +397,14 @@ onMounted(() => {
 }
 
 .empty-row td {
-    height: 22px;
+    height: 16px;
 }
 
 /* FOOTER GRID */
 .footer-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 15px;
+    gap: 10px;
     position: relative;
     z-index: 2;
 }
@@ -414,30 +414,32 @@ onMounted(() => {
 }
 
 .terima-title {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 }
 
 .terima-content {
     background: white;
-    min-height: 80px;
+    min-height: 50px;
 }
 
 .terbilang-text {
-    font-size: 9px;
+    font-size: 7px;
     font-style: italic;
-    line-height: 1.4;
-    margin-bottom: 25px;
+    line-height: 1.3;
+    margin-bottom: 15px;
+    text-align: right;
+    line-height: end;
 }
 
 .signature-area {
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
 .signature-line {
     text-align: left;
-    font-size: 9px;
+    font-size: 7px;
 }
 
 .summary-section {
@@ -450,10 +452,10 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 10px;
+    padding: 4px 8px;
     border: 1px solid #000;
     background: white;
-    font-size: 10px;
+    font-size: 8px;
 }
 
 .sum-label {
@@ -466,9 +468,9 @@ onMounted(() => {
 }
 
 .sum-total {
-    border: 2px solid #000;
+    border: 1.5px solid #000;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 9px;
 }
 
 /* PRINT STYLES */
@@ -480,12 +482,12 @@ onMounted(() => {
         -webkit-print-color-adjust: exact;
     }
 
-    .print-container {
+    .print-container-a5 {
         margin: 0;
         width: 210mm;
     }
 
-    .invoice-page {
+    .invoice-page-a5 {
         page-break-after: avoid;
     }
 

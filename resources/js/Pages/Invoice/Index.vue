@@ -1,87 +1,4 @@
-const loadBarangList = async () => {
-    // Jika sudah ada data dari props, skip API call
-    if (initialBarangList && initialBarangList.length > 0) {
-        console.log('✓ Using barang data from props:', initialBarangList.length, 'items');
-        barangList.value = initialBarangList;
-        return;
-    }
-    
-    if (loadingBarang.value) {
-        console.log('Already loading barang, skipping...');
-        return;
-    }
-    
-    loadingBarang.value = true;
-    
-    try {
-        console.log('=== START LOADING BARANG FROM API ===');
-        console.log('Current URL:', window.location.href);
-        console.log('API URL:', '/api/barang');
-        
-        const response = await fetch('/api/barang', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            let errorText = '';
-            
-            if (contentType && contentType.includes('application/json')) {
-                const errorData = await response.json();
-                errorText = JSON.stringify(errorData);
-                console.error('JSON Error response:', errorData);
-            } else {
-                errorText = await response.text();
-                console.error('Text Error response:', errorText);
-            }
-            
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Raw data received:', data);
-        console.log('Data type:', typeof data);
-        console.log('Is array:', Array.isArray(data));
-        
-        if (Array.isArray(data)) {
-            barangList.value = data;
-            console.log('✓ Barang list updated successfully from API!');
-            console.log('✓ Total items:', barangList.value.length);
-            console.log('✓ First item:', barangList.value[0]);
-        } else {
-            console.error('✗ Data is not an array:', data);
-            throw new Error('Data yang diterima bukan array');
-        }
-        
-    } catch (error) {
-        console.error('=== ERROR LOADING BARANG FROM API ===');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        // Fallback: gunakan data dari props jika API gagal
-        if (initialBarangList && initialBarangList.length > 0) {
-            console.warn('⚠ API failed, using fallback data from props');
-            barangList.value = initialBarangList;
-        } else {
-            alert('Gagal memuat data barang!\n\nError: ' + error.message + '\n\nCek console browser (F12) untuk detail lengkap.');
-            barangList.value = [];
-        }
-    } finally {
-        loadingBarang.value = false;
-        console.log('=== END LOADING BARANG ===');
-        console.log('Final barangList length:', barangList.value.length);
-    }
-};<script setup>
+<script setup>
 import { ref, computed } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
@@ -92,12 +9,13 @@ const page = usePage();
 const selectedFilter = ref(page.props.filters?.tipe_invoice || '');
 const invoices = ref(page.props.invoices);
 
-// PENTING: Ambil barangList dari props (fallback dari API)
 const initialBarangList = page.props.barangList || [];
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
+const showPrintMenu = ref({});
 const currentStep = ref(1);
+const currentEditStep = ref(1);
 const editingInvoice = ref(null);
 const loadingBarang = ref(false);
 
@@ -124,7 +42,9 @@ const editForm = useForm({
 
 const selectedBarang = ref('');
 const selectedQty = ref(1);
-const barangList = ref(initialBarangList); // Set initial value dari props
+const selectedBarangEdit = ref('');
+const selectedQtyEdit = ref(1);
+const barangList = ref(initialBarangList);
 const nextMJUNumber = ref(1);
 const nextBIPNumber = ref(1);
 
@@ -186,19 +106,18 @@ const totalEdit = computed(() => {
 });
 
 const loadBarangList = async () => {
+    if (initialBarangList && initialBarangList.length > 0) {
+        barangList.value = initialBarangList;
+        return;
+    }
+    
     if (loadingBarang.value) {
-        console.log('Already loading barang, skipping...');
         return;
     }
     
     loadingBarang.value = true;
-    barangList.value = [];
     
     try {
-        console.log('=== START LOADING BARANG ===');
-        console.log('Current URL:', window.location.href);
-        console.log('API URL:', '/api/barang');
-        
         const response = await fetch('/api/barang', {
             method: 'GET',
             headers: {
@@ -209,51 +128,27 @@ const loadBarangList = async () => {
             credentials: 'same-origin'
         });
         
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
         if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            let errorText = '';
-            
-            if (contentType && contentType.includes('application/json')) {
-                const errorData = await response.json();
-                errorText = JSON.stringify(errorData);
-                console.error('JSON Error response:', errorData);
-            } else {
-                errorText = await response.text();
-                console.error('Text Error response:', errorText);
-            }
-            
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+            throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Raw data received:', data);
-        console.log('Data type:', typeof data);
-        console.log('Is array:', Array.isArray(data));
         
         if (Array.isArray(data)) {
             barangList.value = data;
-            console.log('✓ Barang list updated successfully!');
-            console.log('✓ Total items:', barangList.value.length);
-            console.log('✓ First item:', barangList.value[0]);
         } else {
-            console.error('✗ Data is not an array:', data);
             throw new Error('Data yang diterima bukan array');
         }
         
     } catch (error) {
-        console.error('=== ERROR LOADING BARANG ===');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        
-        alert('Gagal memuat data barang!\n\nError: ' + error.message + '\n\nCek console browser (F12) untuk detail lengkap.');
-        barangList.value = [];
+        if (initialBarangList && initialBarangList.length > 0) {
+            barangList.value = initialBarangList;
+        } else {
+            alert('Gagal memuat data barang: ' + error.message);
+            barangList.value = [];
+        }
     } finally {
         loadingBarang.value = false;
-        console.log('=== END LOADING BARANG ===');
     }
 };
 
@@ -288,7 +183,6 @@ const loadNextNumbers = async () => {
             nextBIPNumber.value = dataBIP.next_number || 1;
         }
     } catch (err) {
-        console.log('Error loading next numbers:', err);
         nextMJUNumber.value = 1;
         nextBIPNumber.value = 1;
     }
@@ -298,30 +192,21 @@ const openCreateModal = async () => {
     try {
         showCreateModal.value = true;
         
-        console.log('Modal opened. Initial barangList length:', barangList.value.length);
-        
-        // Load data hanya jika belum ada
         if (barangList.value.length === 0) {
-            console.log('Loading barang data...');
             await Promise.all([
                 loadBarangList(),
                 loadNextNumbers()
             ]);
         } else {
-            console.log('Using existing barang data');
             await loadNextNumbers();
         }
         
-        // Reset form
         createForm.reset();
         createForm.tipe_invoice = 'MJU';
         createForm.tanggal = new Date().toISOString().split('T')[0];
         createForm.details = [];
         currentStep.value = 1;
-        
-        console.log('✓ Modal ready. Barang count:', barangList.value.length);
     } catch (error) {
-        console.error('Error opening modal:', error);
         alert('Gagal membuka modal: ' + error.message);
         showCreateModal.value = false;
     }
@@ -329,7 +214,6 @@ const openCreateModal = async () => {
 
 const openEditModal = async (invoice) => {
     try {
-        // Load barang jika belum ada
         if (barangList.value.length === 0) {
             await loadBarangList();
         }
@@ -349,10 +233,9 @@ const openEditModal = async (invoice) => {
             harga: Number(d.harga),
         }));
         
+        currentEditStep.value = 1;
         showEditModal.value = true;
-        console.log('✓ Edit modal ready. Barang count:', barangList.value.length);
     } catch (error) {
-        console.error('Error:', error);
         alert('Gagal membuka modal edit: ' + error.message);
     }
 };
@@ -363,16 +246,15 @@ const closeCreateModal = () => {
     currentStep.value = 1;
     selectedBarang.value = '';
     selectedQty.value = 1;
-    // Jangan reset barangList agar tidak perlu load ulang
 };
 
 const closeEditModal = () => {
     showEditModal.value = false;
     editForm.reset();
     editingInvoice.value = null;
-    selectedBarang.value = '';
-    selectedQty.value = 1;
-    // Jangan reset barangList agar tidak perlu load ulang
+    currentEditStep.value = 1;
+    selectedBarangEdit.value = '';
+    selectedQtyEdit.value = 1;
 };
 
 const addBarangCreate = () => {
@@ -387,16 +269,7 @@ const addBarangCreate = () => {
         return;
     }
 
-    // Hitung total qty yang sudah ada di details untuk barang ini
     const existingDetail = createForm.details.find(d => d.barang_id == selectedBarang.value);
-    const currentQtyInDetails = existingDetail ? existingDetail.qty : 0;
-    const totalQty = currentQtyInDetails + parseInt(selectedQty.value);
-
-    // Validasi stok
-    if (totalQty > barang.stok) {
-        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nYang sudah ditambahkan: ${currentQtyInDetails}\nYang akan ditambahkan: ${selectedQty.value}\nTotal: ${totalQty}\n\nSilakan kurangi jumlah barang.`);
-        return;
-    }
 
     if (existingDetail) {
         existingDetail.qty += parseInt(selectedQty.value);
@@ -407,7 +280,6 @@ const addBarangCreate = () => {
             nama_barang: barang.nama_barang,
             qty: parseInt(selectedQty.value),
             harga: Number(barang.harga_jual) || 0,
-            stok: barang.stok, // Simpan info stok
         });
     }
 
@@ -417,15 +289,6 @@ const addBarangCreate = () => {
 
 const updateQtyCreate = (index, newQty) => {
     if (newQty < 1) return;
-    
-    const detail = createForm.details[index];
-    const barang = barangList.value.find(b => b.id == detail.barang_id);
-    
-    if (barang && newQty > barang.stok) {
-        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nJumlah yang diminta: ${newQty}\n\nSilakan kurangi jumlah.`);
-        return;
-    }
-    
     createForm.details[index].qty = newQty;
 };
 
@@ -468,49 +331,39 @@ const submitCreate = () => {
     createForm.post(route('invoice.store'), {
         onSuccess: () => {
             closeCreateModal();
-            router.reload();
         },
+        preserveScroll: true,
     });
 };
 
 const addBarangEdit = () => {
-    if (!selectedBarang.value || selectedQty.value < 1) {
+    if (!selectedBarangEdit.value || selectedQtyEdit.value < 1) {
         alert('Pilih barang dan masukkan jumlah yang valid');
         return;
     }
 
-    const barang = barangList.value.find(b => b.id == selectedBarang.value);
+    const barang = barangList.value.find(b => b.id == selectedBarangEdit.value);
     if (!barang) {
         alert('Barang tidak ditemukan');
         return;
     }
 
-    // Hitung total qty yang sudah ada di details untuk barang ini
-    const existingDetail = editForm.details.find(d => d.barang_id == selectedBarang.value);
-    const currentQtyInDetails = existingDetail ? existingDetail.qty : 0;
-    const totalQty = currentQtyInDetails + parseInt(selectedQty.value);
-
-    // Validasi stok
-    if (totalQty > barang.stok) {
-        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nYang sudah ditambahkan: ${currentQtyInDetails}\nYang akan ditambahkan: ${selectedQty.value}\nTotal: ${totalQty}\n\nSilakan kurangi jumlah barang.`);
-        return;
-    }
+    const existingDetail = editForm.details.find(d => d.barang_id == selectedBarangEdit.value);
 
     if (existingDetail) {
-        existingDetail.qty += parseInt(selectedQty.value);
+        existingDetail.qty += parseInt(selectedQtyEdit.value);
     } else {
         editForm.details.push({
             barang_id: barang.id,
             id_barang: barang.id_barang,
             nama_barang: barang.nama_barang,
-            qty: parseInt(selectedQty.value),
+            qty: parseInt(selectedQtyEdit.value),
             harga: Number(barang.harga_jual) || 0,
-            stok: barang.stok, // Simpan info stok
         });
     }
 
-    selectedBarang.value = '';
-    selectedQty.value = 1;
+    selectedBarangEdit.value = '';
+    selectedQtyEdit.value = 1;
 };
 
 const removeBarangEdit = (index) => {
@@ -519,16 +372,33 @@ const removeBarangEdit = (index) => {
 
 const updateQtyEdit = (index, newQty) => {
     if (newQty < 1) return;
-    
-    const detail = editForm.details[index];
-    const barang = barangList.value.find(b => b.id == detail.barang_id);
-    
-    if (barang && newQty > barang.stok) {
-        alert(`Stok tidak mencukupi!\n\nStok tersedia: ${barang.stok}\nJumlah yang diminta: ${newQty}\n\nSilakan kurangi jumlah.`);
-        return;
-    }
-    
     editForm.details[index].qty = newQty;
+};
+
+const nextStepEdit = () => {
+    if (currentEditStep.value === 1) {
+        if (!editForm.nama_client || !editForm.nomor_client || !editForm.alamat_client) {
+            alert('Harap lengkapi data client terlebih dahulu');
+            return;
+        }
+    }
+
+    if (currentEditStep.value === 2) {
+        if (editForm.details.length === 0) {
+            alert('Tambahkan minimal satu barang');
+            return;
+        }
+    }
+
+    if (currentEditStep.value < 3) {
+        currentEditStep.value++;
+    }
+};
+
+const prevStepEdit = () => {
+    if (currentEditStep.value > 1) {
+        currentEditStep.value--;
+    }
 };
 
 const submitEdit = () => {
@@ -540,28 +410,42 @@ const submitEdit = () => {
     editForm.put(route('invoice.update', editingInvoice.value.id), {
         onSuccess: () => {
             closeEditModal();
-            router.reload();
         },
+        preserveScroll: true,
     });
 };
 
 const handleFilter = () => {
     const params = selectedFilter.value ? { tipe_invoice: selectedFilter.value } : {};
-    router.get(route('invoice.index', params), {}, { preserveState: true });
+    router.get(route('invoice.index'), params, { 
+        preserveState: true,
+        preserveScroll: true,
+    });
 };
 
 const handlePrint = () => {
-    const params = selectedFilter.value ? { tipe_invoice: selectedFilter.value } : {};
-    window.open(route('invoice.print', params), '_blank');
+    const params = selectedFilter.value ? `?tipe_invoice=${selectedFilter.value}` : '';
+    window.open(route('invoice.print') + params, '_blank');
 };
 
-const printSingleInvoice = (invoiceId) => {
-    window.open(route('invoice.print-single', invoiceId), '_blank');
+const togglePrintMenu = (invoiceId) => {
+    showPrintMenu.value[invoiceId] = !showPrintMenu.value[invoiceId];
+};
+
+const printSingleInvoice = (invoiceId, size = 'a4') => {
+    if (size === 'a5') {
+        window.open(route('invoice.print-single-a5', invoiceId), '_blank');
+    } else {
+        window.open(route('invoice.print-single', invoiceId), '_blank');
+    }
+    showPrintMenu.value[invoiceId] = false;
 };
 
 const deleteInvoice = (invoiceId, invoiceNumber) => {
     if (confirm(`Apakah Anda yakin ingin menghapus invoice ${invoiceNumber}?`)) {
-        router.delete(route('invoice.destroy', invoiceId));
+        router.delete(route('invoice.destroy', invoiceId), {
+            preserveScroll: true,
+        });
     }
 };
 </script>
@@ -659,9 +543,15 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </td>
                             <td class="px-6 py-3 text-center">
                                 <div class="flex justify-center gap-2">
-                                    <button @click="printSingleInvoice(invoice.id)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
-                                        <PrinterIcon :size="18" />
-                                    </button>
+                                    <div class="relative">
+                                        <button @click="togglePrintMenu(invoice.id)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
+                                            <PrinterIcon :size="18" />
+                                        </button>
+                                        <div v-if="showPrintMenu[invoice.id]" class="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                                            <button @click="printSingleInvoice(invoice.id, 'a4')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Print A4</button>
+                                            <button @click="printSingleInvoice(invoice.id, 'a5')" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">Print A5</button>
+                                        </div>
+                                    </div>
                                     <button @click="openEditModal(invoice)" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
                                         <Edit2Icon :size="18" />
                                     </button>
@@ -708,7 +598,6 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     </div>
 
                     <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
-                        <!-- STEP 1 -->
                         <div v-show="currentStep === 1">
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
@@ -759,7 +648,6 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </div>
                         </div>
 
-                        <!-- STEP 2 -->
                         <div v-show="currentStep === 2">
                             <div v-if="loadingBarang" class="text-center py-4">
                                 <p class="text-gray-500">Loading data barang...</p>
@@ -813,14 +701,10 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                                                 v-for="barang in barangList" 
                                                 :key="barang.id" 
                                                 :value="barang.id"
-                                                :disabled="barang.stok <= 0"
                                             >
-                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }} (Stok: {{ barang.stok }})
+                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }}
                                             </option>
                                         </select>
-                                        <p v-if="barangList.length === 0 && !loadingBarang" class="text-xs text-red-500 mt-1">
-                                            Tidak ada data barang
-                                        </p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
@@ -841,7 +725,6 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                             </div>
                         </div>
 
-                        <!-- STEP 3 -->
                         <div v-show="currentStep === 3">
                             <div class="space-y-3 mb-6 pb-6 border-b">
                                 <div class="flex justify-between text-gray-700">
@@ -886,157 +769,165 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
 
                 <div class="inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-lg shadow-xl">
                     <div class="flex items-center justify-between px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">Edit Invoice</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Edit Invoice - Step {{ currentEditStep }} of 3</h3>
                         <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600">
                             <XIcon :size="24" />
                         </button>
                     </div>
 
                     <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
-                        <div class="mb-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Data Client</h4>
-                            
+                        <div v-show="currentEditStep === 1">
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Client</label>
-                                    <input v-model="editForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nama Client:</label>
+                                    <input v-model="editForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Client</label>
-                                    <input v-model="editForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Client:</label>
+                                    <input v-model="editForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
-                                    <input v-model="editForm.tanggal" type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
+                                    <input v-model="editForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Invoice</label>
-                                    <input type="text" :value="editingInvoice?.nomor_invoice" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Invoice:</label>
+                                    <input :value="editingInvoice?.nomor_invoice" type="text" readonly class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100" />
                                 </div>
                             </div>
 
                             <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Client</label>
-                                <textarea v-model="editForm.alamat_client" placeholder="Masukan Alamat..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3"></textarea>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Alamat Client:</label>
+                                <input v-model="editForm.alamat_client" type="text" placeholder="Masukan Alamat Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
-                            <div class="grid grid-cols-3 gap-6 mb-6">
+                            <div class="grid grid-cols-2 gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Diskon (%)</label>
-                                    <input v-model.number="editForm.diskon" type="number" min="0" max="100" placeholder="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Diskon (%):</label>
+                                    <input v-model.number="editForm.diskon" type="number" placeholder="(Opsional)" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">PPN</label>
-                                    <select v-model="editForm.ppn" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">PPN:</label>
+                                    <select v-model="editForm.ppn" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                         <option :value="false">Tidak</option>
                                         <option :value="true">Ya (11%)</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Invoice</label>
-                                    <input type="text" :value="editingInvoice?.tipe_invoice" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600" />
+                            </div>
+                        </div>
+
+                        <div v-show="currentEditStep === 2">
+                            <div v-if="loadingBarang" class="text-center py-4">
+                                <p class="text-gray-500">Loading data barang...</p>
+                            </div>
+
+                            <div v-else>
+                                <div class="mb-4 max-h-60 overflow-y-auto">
+                                    <table class="w-full border-collapse">
+                                        <thead class="bg-gray-50 sticky top-0">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b">Nama Barang</th>
+                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Qty</th>
+                                                <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b">Harga</th>
+                                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-if="editForm.details.length === 0">
+                                                <td colspan="4" class="px-3 py-3 text-center text-gray-500 text-sm">Belum ada barang</td>
+                                            </tr>
+                                            <tr v-for="(detail, index) in editForm.details" :key="index" class="border-b hover:bg-gray-50">
+                                                <td class="px-3 py-2 text-sm text-gray-900">{{ detail.nama_barang }}</td>
+                                                <td class="px-3 py-2 text-center">
+                                                    <div class="flex items-center justify-center gap-1">
+                                                        <button type="button" @click="updateQtyEdit(index, detail.qty - 1)" class="p-1 text-red-500 hover:bg-red-50 rounded">
+                                                            <MinusIcon :size="14" />
+                                                        </button>
+                                                        <input :value="detail.qty" type="number" min="1" @change="(e) => updateQtyEdit(index, parseInt(e.target.value))" class="w-12 px-1 py-1 border border-gray-300 rounded text-center text-sm" />
+                                                        <button type="button" @click="updateQtyEdit(index, detail.qty + 1)" class="p-1 text-blue-500 hover:bg-blue-50 rounded">
+                                                            <PlusIcon :size="14" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-2 text-right text-sm text-gray-900">Rp {{ Number(detail.harga).toLocaleString('id-ID') }}</td>
+                                                <td class="px-3 py-2 text-center">
+                                                    <button type="button" @click="removeBarangEdit(index)" class="p-1 text-red-500 hover:bg-red-50 rounded">
+                                                        <Trash2Icon :size="16" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4 pt-4 border-t">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
+                                        <select v-model="selectedBarangEdit" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                            <option value="">-- Pilih Barang --</option>
+                                            <option 
+                                                v-for="barang in barangList" 
+                                                :key="barang.id" 
+                                                :value="barang.id"
+                                            >
+                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                                        <input v-model.number="selectedQtyEdit" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button 
+                                            type="button" 
+                                            @click="addBarangEdit" 
+                                            :disabled="barangList.length === 0"
+                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <PlusIcon :size="16" />
+                                            Tambah
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-6">
-                            <h4 class="font-semibold text-gray-900 mb-4">Daftar Barang</h4>
-                            
-                            <div class="mb-4 max-h-60 overflow-y-auto">
-                                <table class="w-full border-collapse">
-                                    <thead class="bg-gray-50 sticky top-0">
-                                        <tr>
-                                            <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700 border-b">Nama Barang</th>
-                                            <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Qty</th>
-                                            <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700 border-b">Harga</th>
-                                            <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700 border-b">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-if="editForm.details.length === 0">
-                                            <td colspan="4" class="px-3 py-3 text-center text-gray-500 text-sm">Belum ada barang</td>
-                                        </tr>
-                                        <tr v-for="(detail, index) in editForm.details" :key="index" class="border-b hover:bg-gray-50">
-                                            <td class="px-3 py-2 text-sm text-gray-900">{{ detail.nama_barang }}</td>
-                                            <td class="px-3 py-2 text-center">
-                                                <div class="flex items-center justify-center gap-1">
-                                                    <button type="button" @click="updateQtyEdit(index, detail.qty - 1)" class="p-1 text-red-500 hover:bg-red-50 rounded">
-                                                        <MinusIcon :size="14" />
-                                                    </button>
-                                                    <input :value="detail.qty" type="number" min="1" @change="(e) => updateQtyEdit(index, parseInt(e.target.value))" class="w-12 px-1 py-1 border border-gray-300 rounded text-center text-sm" />
-                                                    <button type="button" @click="updateQtyEdit(index, detail.qty + 1)" class="p-1 text-blue-500 hover:bg-blue-50 rounded">
-                                                        <PlusIcon :size="14" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                            <td class="px-3 py-2 text-right text-sm text-gray-900">Rp {{ Number(detail.harga).toLocaleString('id-ID') }}</td>
-                                            <td class="px-3 py-2 text-center">
-                                                <button type="button" @click="removeBarangEdit(index)" class="p-1 text-red-500 hover:bg-red-50 rounded">
-                                                    <Trash2Icon :size="16" />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-4 pt-4 border-t">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
-                                    <select v-model="selectedBarang" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">-- Pilih Barang --</option>
-                                        <option v-for="barang in barangList" :key="barang.id" :value="barang.id">
-                                            {{ barang.nama_barang }} (Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }})
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
-                                    <input v-model.number="selectedQty" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                                <div class="flex items-end">
-                                    <button type="button" @click="addBarangEdit" class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm">
-                                        <PlusIcon :size="16" />
-                                        Tambah
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="border-t pt-4">
-                            <h4 class="font-semibold text-gray-900 mb-4">Summary</h4>
-                            <div class="space-y-2 mb-4">
-                                <div class="flex justify-between text-gray-700 text-sm">
-                                    <span>Subtotal:</span>
+                        <div v-show="currentEditStep === 3">
+                            <div class="space-y-3 mb-6 pb-6 border-b">
+                                <div class="flex justify-between text-gray-700">
+                                    <span class="font-medium">Subtotal:</span>
                                     <span class="font-semibold">Rp {{ subtotalEdit.toLocaleString('id-ID') }}</span>
                                 </div>
-                                <div v-if="editForm.diskon > 0" class="flex justify-between text-gray-700 text-sm">
-                                    <span>Diskon ({{ editForm.diskon }}%):</span>
+                                <div class="flex justify-between text-gray-700">
+                                    <span class="font-medium">Diskon ({{ editForm.diskon }}%):</span>
                                     <span class="font-semibold text-red-600">- Rp {{ diskonAmountEdit.toLocaleString('id-ID') }}</span>
                                 </div>
-                                <div class="flex justify-between text-gray-700 text-sm">
-                                    <span>Setelah Diskon:</span>
+                                <div class="flex justify-between text-gray-700">
+                                    <span class="font-medium">Setelah Diskon:</span>
                                     <span class="font-semibold">Rp {{ afterDiskonEdit.toLocaleString('id-ID') }}</span>
                                 </div>
-                                <div v-if="editForm.ppn" class="flex justify-between text-gray-700 text-sm">
-                                    <span>PPN (11%):</span>
+                                <div v-if="editForm.ppn" class="flex justify-between text-gray-700">
+                                    <span class="font-medium">PPN (11%):</span>
                                     <span class="font-semibold text-orange-600">+ Rp {{ ppnAmountEdit.toLocaleString('id-ID') }}</span>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t">
-                                <span>Total:</span>
+                            <div class="flex justify-between text-xl font-bold text-gray-900">
+                                <span>TOTAL:</span>
                                 <span class="text-blue-600">Rp {{ totalEdit.toLocaleString('id-ID') }}</span>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex gap-4 px-6 py-4 border-t bg-gray-50">
-                        <button type="button" @click="submitEdit" :disabled="editForm.processing" class="flex-1 px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-semibold disabled:opacity-50">Perbarui</button>
-                        <button type="button" @click="closeEditModal" class="flex-1 px-6 py-2 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-semibold">Batal</button>
+                        <button v-if="currentEditStep > 1" type="button" @click="prevStepEdit" class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium">Kembali</button>
+                        <button v-if="currentEditStep < 3" type="button" @click="nextStepEdit" class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium">Selanjutnya</button>
+                        <button v-if="currentEditStep === 3" type="button" @click="submitEdit" class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium">Simpan</button>
+                        <button type="button" @click="closeEditModal" class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium">Batal</button>
                     </div>
                 </div>
             </div>

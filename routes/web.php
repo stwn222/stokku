@@ -75,27 +75,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Laporan Barang Keluar Routes
     Route::get('/laporan-barang-keluar', [LaporanBarangKeluarController::class, 'index'])->name('laporan-barang-keluar.index');
 
-    Route::get('/invoice', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoice.index');
-    Route::get('/invoice/create', [App\Http\Controllers\InvoiceController::class, 'create'])->name('invoice.create');
-    Route::post('/invoice', [App\Http\Controllers\InvoiceController::class, 'store'])->name('invoice.store');
-    Route::get('/invoice/{invoice}/edit', [App\Http\Controllers\InvoiceController::class, 'edit'])->name('invoice.edit');
-    Route::put('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('invoice.update');
-    Route::delete('/invoice/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoice.destroy');
-    Route::get('/invoice/print', [App\Http\Controllers\InvoiceController::class, 'print'])->name('invoice.print');
-    Route::get('/invoice/{id}/print-single', [App\Http\Controllers\InvoiceController::class, 'printSingle'])->name('invoice.print-single');
+    // Invoice Routes
+    Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice.index');
+    Route::get('/invoice/create', [InvoiceController::class, 'create'])->name('invoice.create');
+    Route::post('/invoice', [InvoiceController::class, 'store'])->name('invoice.store');
+    Route::get('/invoice/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoice.edit');
+    Route::put('/invoice/{invoice}', [InvoiceController::class, 'update'])->name('invoice.update');
+    Route::delete('/invoice/{invoice}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
+    
+    // PENTING: Route print harus di atas route print-single
+    Route::get('/invoice/print', [InvoiceController::class, 'print'])->name('invoice.print');
+    Route::get('/invoice/{id}/print-single', [InvoiceController::class, 'printSingle'])->name('invoice.print-single');
+    Route::get('/invoice/{id}/print-single-a5', [InvoiceController::class, 'printSingleA5'])->name('invoice.print-single-a5');
+    
+    // API Invoice Next Number
     Route::get('/api/invoice-next-number/{tipe}', function($tipe) {
-    $lastInvoice = \App\Models\Invoice::where('tipe_invoice', $tipe)->latest('id')->first();
-    
-    if ($lastInvoice) {
-        $parts = explode('/', $lastInvoice->nomor_invoice);
-        $nomorPart = explode('.', $parts[1]);
-        $nextNumber = intval($nomorPart[0]) + 1;
-    } else {
-        $nextNumber = 1;
-    }
-    
-    return response()->json(['next_number' => $nextNumber]);
-})->middleware('auth');
+        $lastInvoice = \App\Models\Invoice::where('tipe_invoice', $tipe)->latest('id')->first();
+        
+        if ($lastInvoice) {
+            $parts = explode('/', $lastInvoice->nomor_invoice);
+            $nomorPart = explode('.', $parts[1]);
+            $nextNumber = intval($nomorPart[0]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return response()->json(['next_number' => $nextNumber]);
+    })->middleware('auth');
 
     // User Management Routes
     Route::get('/user-management', [UserManagementController::class, 'index'])->name('user-management.index');

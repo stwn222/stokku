@@ -29,6 +29,19 @@ const form = ref({
     keterangan: '',
 });
 
+const formattedHargaBeli = computed({
+    get() {
+        if (form.value.harga_beli === null || form.value.harga_beli === '' || isNaN(form.value.harga_beli)) {
+            return '';
+        }
+        return Number(form.value.harga_beli).toLocaleString('id-ID');
+    },
+    set(newValue) {
+        const numericValue = parseInt(newValue.replace(/[^0-9]/g, ''), 10);
+        form.value.harga_beli = isNaN(numericValue) ? 0 : numericValue;
+    }
+});
+
 watch([perPage, search], () => {
     router.get(route('barang-masuk.index'), {
         per_page: perPage.value,
@@ -143,12 +156,11 @@ const formatDate = (date) => {
             </div>
         </template>
 
-        <!-- Data Table -->
         <div class="bg-white rounded-lg shadow-md">
             <div class="border-b border-gray-200 p-6">
                 <div class="flex items-center justify-between">
                     <h2 class="text-xl font-bold text-gray-800">Data Barang Masuk</h2>
-                    <button 
+                    <button
                         @click="openCreateModal"
                         class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
                     >
@@ -162,7 +174,7 @@ const formatDate = (date) => {
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Tampilkan</label>
-                        <select 
+                        <select
                             v-model="perPage"
                             class="border border-gray-300 rounded px-2 py-1 text-sm"
                         >
@@ -176,7 +188,7 @@ const formatDate = (date) => {
 
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Cari:</label>
-                        <input 
+                        <input
                             v-model="search"
                             type="text"
                             class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
@@ -203,8 +215,8 @@ const formatDate = (date) => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr 
-                            v-for="(item, index) in barangMasuks.data" 
+                        <tr
+                            v-for="(item, index) in barangMasuks.data"
                             :key="item.id"
                             class="hover:bg-gray-50"
                         >
@@ -221,14 +233,14 @@ const formatDate = (date) => {
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.vendor }}</td>
                             <td class="px-4 py-3 text-sm border">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button 
+                                    <button
                                         @click="openEditModal(item)"
                                         class="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-full transition"
                                         title="Edit"
                                     >
                                         <Pencil :size="14" />
                                     </button>
-                                    <button 
+                                    <button
                                         @click="deleteBarangMasuk(item.id)"
                                         class="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition"
                                         title="Hapus"
@@ -247,14 +259,13 @@ const formatDate = (date) => {
                 </table>
             </div>
 
-            <!-- Pagination -->
             <div class="p-6 flex items-center justify-between border-t border-gray-200">
                 <div class="text-sm text-gray-700">
                     Menampilkan {{ barangMasuks.from || 0 }} sampai {{ barangMasuks.to || 0 }} dari {{ barangMasuks.total || 0 }} data
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button 
+                    <button
                         @click="router.get(barangMasuks.prev_page_url)"
                         :disabled="!barangMasuks.prev_page_url"
                         class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -263,12 +274,12 @@ const formatDate = (date) => {
                     </button>
 
                     <template v-for="link in barangMasuks.links.slice(1, -1)" :key="link.label">
-                        <button 
+                        <button
                             @click="link.url ? router.get(link.url) : null"
                             :class="[
                                 'px-3 py-1 border rounded',
-                                link.active 
-                                    ? 'bg-blue-500 text-white border-blue-500' 
+                                link.active
+                                    ? 'bg-blue-500 text-white border-blue-500'
                                     : 'border-gray-300 hover:bg-gray-100'
                             ]"
                         >
@@ -276,7 +287,7 @@ const formatDate = (date) => {
                         </button>
                     </template>
 
-                    <button 
+                    <button
                         @click="router.get(barangMasuks.next_page_url)"
                         :disabled="!barangMasuks.next_page_url"
                         class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -287,19 +298,17 @@ const formatDate = (date) => {
             </div>
         </div>
 
-        <!-- Modal Popup -->
-        <div 
+        <div
             v-if="showModal"
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             @click.self="closeModal"
         >
             <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <!-- Modal Header -->
                 <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                     <h3 class="text-xl font-bold text-gray-800">
                         {{ modalMode === 'create' ? 'Entri Barang Masuk' : 'Edit Barang Masuk' }}
                     </h3>
-                    <button 
+                    <button
                         @click="closeModal"
                         class="text-gray-400 hover:text-gray-600 transition"
                     >
@@ -307,13 +316,11 @@ const formatDate = (date) => {
                     </button>
                 </div>
 
-                <!-- Modal Body -->
                 <form @submit.prevent="submitForm" class="p-6">
                     <div class="grid grid-cols-2 gap-6">
-                        <!-- Kode Transaksi -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kode Transaksi :</label>
-                            <input 
+                            <input
                                 v-model="form.kode_transaksi"
                                 type="text"
                                 readonly
@@ -321,10 +328,9 @@ const formatDate = (date) => {
                             />
                         </div>
 
-                        <!-- Kode Barang -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kode Barang :</label>
-                            <input 
+                            <input
                                 :value="selectedBarang?.id_barang || ''"
                                 type="text"
                                 readonly
@@ -333,10 +339,9 @@ const formatDate = (date) => {
                             />
                         </div>
 
-                        <!-- Nama Barang -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang :</label>
-                            <select 
+                            <select
                                 v-model="form.barang_id"
                                 required
                                 class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
@@ -348,10 +353,9 @@ const formatDate = (date) => {
                             </select>
                         </div>
 
-                        <!-- Tanggal -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal :</label>
-                            <input 
+                            <input
                                 v-model="form.tanggal"
                                 type="date"
                                 required
@@ -359,10 +363,9 @@ const formatDate = (date) => {
                             />
                         </div>
 
-                        <!-- Jumlah -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah :</label>
-                            <input 
+                            <input
                                 v-model="form.jumlah"
                                 type="number"
                                 required
@@ -371,27 +374,23 @@ const formatDate = (date) => {
                             />
                         </div>
 
-                        <!-- Harga Beli -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Harga Beli :</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-2 text-sm text-gray-500">Rp</span>
-                                <input 
-                                    v-model="form.harga_beli"
-                                    type="number"
+                                <input
+                                    v-model="formattedHargaBeli"
+                                    type="text"
                                     required
-                                    min="0"
-                                    step="0.01"
-                                    class="w-full border border-gray-300 rounded pl-10 pr-3 py-2 text-sm"
+                                    class="w-full border border-gray-300 rounded pl-10 pr-3 py-2 text-sm text-left"
                                     placeholder="0"
                                 />
                             </div>
                         </div>
 
-                        <!-- Vendor -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Vendor :</label>
-                            <input 
+                            <input
                                 v-model="form.vendor"
                                 type="text"
                                 required
@@ -400,12 +399,11 @@ const formatDate = (date) => {
                             />
                         </div>
 
-                        <!-- PPN Checkbox & Amount -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">PPN :</label>
                             <div class="flex items-center gap-4">
                                 <label class="flex items-center gap-2">
-                                    <input 
+                                    <input
                                         v-model="form.is_ppn"
                                         type="checkbox"
                                         class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -419,10 +417,9 @@ const formatDate = (date) => {
                         </div>
                     </div>
 
-                    <!-- Keterangan -->
                     <div class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan :</label>
-                        <textarea 
+                        <textarea
                             v-model="form.keterangan"
                             rows="3"
                             class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
@@ -430,7 +427,6 @@ const formatDate = (date) => {
                         ></textarea>
                     </div>
 
-                    <!-- Summary -->
                     <div v-if="form.barang_id && form.harga_beli > 0" class="mt-6 bg-blue-50 border border-blue-200 rounded p-4">
                         <div class="grid grid-cols-3 gap-4 text-sm">
                             <div>
@@ -448,16 +444,15 @@ const formatDate = (date) => {
                         </div>
                     </div>
 
-                    <!-- Modal Footer -->
                     <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                        <button 
+                        <button
                             type="button"
                             @click="closeModal"
                             class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition"
                         >
                             Batal
                         </button>
-                        <button 
+                        <button
                             type="submit"
                             class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition"
                         >

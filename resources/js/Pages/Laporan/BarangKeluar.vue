@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Home, ChevronRight, FileText, Printer } from 'lucide-vue-next';
+import { Home, ChevronRight, Printer } from 'lucide-vue-next';
 
 const props = defineProps({
     barangKeluars: Object,
@@ -44,24 +44,146 @@ const tampilkanData = () => {
     applyFilter();
 };
 
-const cetakLaporan = () => {
-    window.print();
-};
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-    }).format(value);
-};
-
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('id-ID', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
     });
+};
+
+const cetakLaporan = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    
+    let tableRows = '';
+    props.barangKeluars.data.forEach((item, index) => {
+        tableRows += `
+            <tr>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${index + 1}</td>
+                <td style="border: 1px solid #000; padding: 8px;">${item.kode_transaksi}</td>
+                <td style="border: 1px solid #000; padding: 8px;">${formatDate(item.tanggal)}</td>
+                <td style="border: 1px solid #000; padding: 8px;">${item.barang.nama_barang}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item.jumlah}</td>
+                <td style="border: 1px solid #000; padding: 8px;">${item.barang.satuan.nama_satuan}</td>
+                <td style="border: 1px solid #000; padding: 8px;">${item.keterangan}</td>
+            </tr>
+        `;
+    });
+
+    const periodeText = tanggalAwal.value && tanggalAkhir.value 
+        ? `Periode: ${formatDate(tanggalAwal.value)} - ${formatDate(tanggalAkhir.value)}`
+        : 'Semua Data';
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Laporan Barang Keluar</title>
+            <style>
+                @page {
+                    size: A4 landscape;
+                    margin: 15mm;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                }
+                h1 {
+                    text-align: center;
+                    margin: 0 0 10px 0;
+                    font-size: 20px;
+                    text-transform: uppercase;
+                }
+                .periode {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    font-size: 12px;
+                    padding-bottom: 15px;
+                    border-bottom: 3px solid #000;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th {
+                    background-color: #e5e7eb;
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                    font-size: 11px;
+                    font-weight: bold;
+                }
+                td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    font-size: 11px;
+                }
+                .footer {
+                    margin-top: 40px;
+                    font-size: 11px;
+                }
+                .print-date {
+                    margin-bottom: 50px;
+                }
+                .signature {
+                    text-align: right;
+                    margin-top: 40px;
+                }
+                .signature-label {
+                    font-weight: bold;
+                    margin-bottom: 60px;
+                }
+                .signature-line {
+                    border-top: 1px solid #000;
+                    width: 200px;
+                    margin-left: auto;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>LAPORAN BARANG KELUAR</h1>
+            <div class="periode">${periodeText}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">No</th>
+                        <th>Kode Transaksi</th>
+                        <th>Tanggal</th>
+                        <th>Nama Barang</th>
+                        <th style="text-align: center;">Jumlah Keluar</th>
+                        <th>Satuan</th>
+                        <th>Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+            <div class="footer">
+                <div class="print-date">
+                    Dicetak pada: ${new Date().toLocaleDateString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    })}
+                </div>
+                <div class="signature">
+                    <div class="signature-label">Administrator</div>
+                    <div class="signature-line"></div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
 };
 </script>
 
@@ -79,41 +201,45 @@ const formatDate = (date) => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="bg-white rounded-lg shadow-md">
+            <!-- Header Card -->
+            <div class="border-b border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-800">Laporan Barang Keluar</h2>
+            </div>
+
             <!-- Filter Section -->
-            <div class="bg-white rounded-lg shadow-md p-6 print:hidden">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Filter Data Barang Keluar</h3>
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Filter Data Barang Keluar</h3>
                 
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
+                <div class="flex items-end gap-4">
+                    <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Awal</label>
                         <input 
                             v-model="tanggalAwal"
                             type="date"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2"
                         />
                     </div>
 
-                    <div>
+                    <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
                         <input 
                             v-model="tanggalAkhir"
                             type="date"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2"
                         />
                     </div>
-                </div>
 
-                <div class="flex items-center justify-end gap-3 mt-6">
                     <button 
                         @click="tampilkanData"
-                        class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition"
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded transition"
                     >
                         Tampilkan
                     </button>
+                    
                     <button 
                         @click="cetakLaporan"
-                        class="flex items-center gap-2 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
+                        class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded transition flex items-center gap-2"
                     >
                         <Printer :size="18" />
                         Cetak
@@ -121,63 +247,49 @@ const formatDate = (date) => {
                 </div>
             </div>
 
-            <!-- Report Table -->
-            <div class="bg-white rounded-lg shadow-md">
-                <!-- Print Header -->
-                <div class="hidden print:block p-8 text-center border-b border-gray-300">
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">LAPORAN BARANG KELUAR</h1>
-                    <p class="text-sm text-gray-600">
-                        <span v-if="tanggalAwal && tanggalAkhir">
-                            Periode: {{ formatDate(tanggalAwal) }} - {{ formatDate(tanggalAkhir) }}
-                        </span>
-                        <span v-else>Semua Data</span>
-                    </p>
-                </div>
+            <!-- Report Section -->
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Laporan Barang Keluar</h3>
 
-                <div class="border-b border-gray-200 p-6 print:hidden">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-gray-800">Laporan Barang Keluar</h2>
+                <!-- Data Controls -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-700">Tampilkan</label>
+                        <select 
+                            v-model="perPage"
+                            class="border border-gray-300 rounded px-2 py-1 text-sm"
+                        >
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-sm text-gray-700">data</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-700">Cari:</label>
+                        <input 
+                            v-model="search"
+                            type="text"
+                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
+                            placeholder="Cari data..."
+                        />
                     </div>
                 </div>
 
-                <div class="p-6 border-b border-gray-200 print:hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-700">Tampilkan</label>
-                            <select 
-                                v-model="perPage"
-                                class="border border-gray-300 rounded px-2 py-1 text-sm"
-                            >
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                            <span class="text-sm text-gray-700">data</span>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-700">Cari:</label>
-                            <input 
-                                v-model="search"
-                                type="text"
-                                class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
-                                placeholder="Cari data..."
-                            />
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Table -->
                 <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Transaksi</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Tanggal</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Jumlah Keluar</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Satuan</th>
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">No</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Kode Transaksi</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
+                                <th class="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">Jumlah Keluar</th>
+                                <th class="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">Satuan</th>
+                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -186,17 +298,30 @@ const formatDate = (date) => {
                                 :key="item.id"
                                 class="hover:bg-gray-50"
                             >
-                                <td class="px-4 py-3 text-sm text-gray-700 border">
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                                     {{ barangKeluars.from + index }}
                                 </td>
-                                <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.kode_transaksi }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatDate(item.tanggal) }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.nama_barang }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.jumlah }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.satuan.nama_satuan }}</td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
+                                    {{ item.kode_transaksi }}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
+                                    {{ formatDate(item.tanggal) }}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
+                                    {{ item.barang.nama_barang }}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
+                                    {{ item.jumlah }}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
+                                    {{ item.barang.satuan.nama_satuan }}
+                                </td>
+                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
+                                    {{ item.keterangan }}
+                                </td>
                             </tr>
                             <tr v-if="barangKeluars.data.length === 0">
-                                <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
+                                <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                                     <span v-if="!tanggalAwal || !tanggalAkhir">
                                         Silakan pilih tanggal untuk menampilkan data
                                     </span>
@@ -209,95 +334,44 @@ const formatDate = (date) => {
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="p-6 flex items-center justify-between border-t border-gray-200 print:hidden">
-                    <div class="text-sm text-gray-700">
-                        Menampilkan {{ barangKeluars.from || 0 }} sampai {{ barangKeluars.to || 0 }} dari {{ barangKeluars.total || 0 }} data
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button 
-                            @click="router.get(barangKeluars.prev_page_url)"
-                            :disabled="!barangKeluars.prev_page_url"
-                            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &lt;
-                        </button>
-
-                        <template v-for="link in barangKeluars.links.slice(1, -1)" :key="link.label">
-                            <button 
-                                @click="link.url ? router.get(link.url) : null"
-                                :class="[
-                                    'px-3 py-1 border rounded',
-                                    link.active 
-                                        ? 'bg-blue-500 text-white border-blue-500' 
-                                        : 'border-gray-300 hover:bg-gray-100'
-                                ]"
-                            >
-                                {{ link.label }}
-                            </button>
-                        </template>
-
-                        <button 
-                            @click="router.get(barangKeluars.next_page_url)"
-                            :disabled="!barangKeluars.next_page_url"
-                            class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            &gt;
-                        </button>
-                    </div>
+                <!-- Pagination Info -->
+                <div class="mt-4 text-sm text-gray-700">
+                    Menampilkan {{ barangKeluars.from || 0 }} sampai {{ barangKeluars.to || 0 }} dari {{ barangKeluars.total || 0 }} data
                 </div>
 
-                <!-- Print Footer -->
-                <div class="hidden print:block p-8 text-right border-t border-gray-300">
-                    <p class="text-sm text-gray-600 mb-8">
-                        Dicetak pada: {{ new Date().toLocaleDateString('id-ID', { 
-                            day: '2-digit', 
-                            month: 'long', 
-                            year: 'numeric' 
-                        }) }}
-                    </p>
-                    <div class="mt-16">
-                        <p class="text-sm font-semibold text-gray-800">Administrator</p>
-                        <div class="mt-16 border-t border-gray-800 w-48 ml-auto"></div>
-                    </div>
+                <!-- Pagination Controls -->
+                <div class="flex items-center justify-center gap-2 mt-4">
+                    <button 
+                        @click="router.get(barangKeluars.prev_page_url)"
+                        :disabled="!barangKeluars.prev_page_url"
+                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        &lt;
+                    </button>
+
+                    <button 
+                        v-for="link in barangKeluars.links.slice(1, -1)" 
+                        :key="link.label"
+                        @click="link.url ? router.get(link.url) : null"
+                        :class="[
+                            'px-3 py-1 border rounded',
+                            link.active 
+                                ? 'bg-blue-500 text-white border-blue-500' 
+                                : 'border-gray-300 hover:bg-gray-100'
+                        ]"
+                    >
+                        {{ link.label }}
+                    </button>
+
+                    <button 
+                        @click="router.get(barangKeluars.next_page_url)"
+                        :disabled="!barangKeluars.next_page_url"
+                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        &gt;
+                    </button>
                 </div>
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
-
-<style>
-@media print {
-    @page {
-        size: A4 landscape;
-        margin: 1cm;
-    }
-    
-    body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-    
-    .print\:hidden {
-        display: none !important;
-    }
-    
-    .print\:block {
-        display: block !important;
-    }
-    
-    table {
-        page-break-inside: auto;
-    }
-    
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
-    
-    thead {
-        display: table-header-group;
-    }
-}
-</style>

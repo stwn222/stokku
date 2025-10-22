@@ -204,6 +204,7 @@ const deleteBarangKeluar = (id) => {
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Harga Jual</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">PPN</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Total</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Keterangan</th>
                             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
                         </tr>
                     </thead>
@@ -218,6 +219,7 @@ const deleteBarangKeluar = (id) => {
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatRupiah(item.harga_jual) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatRupiah(item.ppn) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border font-medium">{{ formatRupiah(item.total) }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.keterangan || '-' }}</td>
                             <td class="px-4 py-3 text-sm border">
                                 <div class="flex items-center justify-center gap-2">
                                     <button @click="openModal(item)" class="p-1.5 bg-green-500 hover:bg-green-600 text-white rounded-full transition" title="Edit">
@@ -230,7 +232,7 @@ const deleteBarangKeluar = (id) => {
                             </td>
                         </tr>
                         <tr v-if="barangKeluars.data.length === 0">
-                            <td colspan="10" class="px-4 py-8 text-center text-gray-500 border">
+                            <td colspan="11" class="px-4 py-8 text-center text-gray-500 border">
                                 Tidak ada data barang keluar
                             </td>
                         </tr>
