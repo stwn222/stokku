@@ -55,13 +55,13 @@ const logoPath = computed(() => {
 const companyName = computed(() => {
     return props.invoice.tipe_invoice === 'BIP'
         ? 'PT. Bhakti Inti Pratama'
-        : 'PT. Media Jaya Utama';
+        : 'CV. Media Jaya Utama';
 });
 
 const accountName = computed(() => {
     return props.invoice.tipe_invoice === 'BIP'
         ? 'PT. BHAKTI INTI PRATAMA'
-        : 'PT. MEDIA JAYA UTAMA';
+        : 'CV. MEDIA JAYA UTAMA';
 });
 
 onMounted(() => {

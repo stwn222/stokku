@@ -1,9 +1,8 @@
 <script setup>
-import { Print, X } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3';
 
-defineProps({
-    invoices: Array,
-});
+const page = usePage();
+const invoices = page.props.invoices || [];
 
 const handlePrint = () => {
     window.print();
@@ -22,20 +21,29 @@ const handleClose = () => {
                 @click="handlePrint"
                 class="flex items-center gap-2 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium"
             >
-                <Print :size="20" />
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
                 Cetak
             </button>
             <button 
                 @click="handleClose"
                 class="flex items-center gap-2 px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition font-medium"
             >
-                <X :size="20" />
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
                 Tutup
             </button>
         </div>
 
+        <!-- No Data Message -->
+        <div v-if="!invoices || invoices.length === 0" class="bg-white p-8 rounded-lg shadow-md text-center print:hidden">
+            <p class="text-gray-500 text-lg">Tidak ada data invoice untuk dicetak</p>
+        </div>
+
         <!-- Invoice Documents -->
-        <div class="space-y-8">
+        <div v-else class="space-y-8">
             <div v-for="(invoice, idx) in invoices" :key="invoice.id" class="bg-white p-8 rounded-lg shadow-md print:shadow-none print:rounded-none print:p-0 print:break-after-page">
                 
                 <!-- Header -->
@@ -75,9 +83,9 @@ const handleClose = () => {
                     <div>
                         <h3 class="text-sm font-bold text-gray-700 uppercase mb-2">Dari:</h3>
                         <div class="text-gray-900">
-                            <p class="font-semibold">{{ invoice.user.name }}</p>
-                            <p class="text-sm mt-1">PT. Stokku Indonesia</p>
-                            <p class="text-sm">Jakarta, Indonesia</p>
+                            <p class="font-semibold">{{ invoice.user?.name || 'Admin' }}</p>
+                            <p class="text-sm mt-1">PT. anteqqq anteqq jawa</p>
+                            <p class="text-sm">jogja, Indonesia</p>
                         </div>
                     </div>
                 </div>
@@ -99,8 +107,8 @@ const handleClose = () => {
                         <tbody>
                             <tr v-for="(detail, index) in invoice.details" :key="detail.id" class="border border-gray-300 hover:bg-gray-50">
                                 <td class="px-4 py-2 text-sm text-gray-900">{{ index + 1 }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-900">{{ detail.barang.id_barang }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-900">{{ detail.barang.nama_barang }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900">{{ detail.barang?.id_barang || '-' }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900">{{ detail.barang?.nama_barang || '-' }}</td>
                                 <td class="px-4 py-2 text-center text-sm text-gray-900">{{ detail.qty }}</td>
                                 <td class="px-4 py-2 text-right text-sm text-gray-900">Rp {{ Number(detail.harga).toLocaleString('id-ID') }}</td>
                                 <td class="px-4 py-2 text-right text-sm font-semibold text-gray-900">

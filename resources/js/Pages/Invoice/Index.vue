@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
 import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon, PrinterIcon } from 'lucide-vue-next';
@@ -47,6 +47,10 @@ const selectedQtyEdit = ref(1);
 const barangList = ref(initialBarangList);
 const nextMJUNumber = ref(1);
 const nextBIPNumber = ref(1);
+
+watch(() => page.props.invoices, (newInvoices) => {
+    invoices.value = newInvoices;
+});
 
 const currentInvoiceNumber = computed(() => {
     const number = createForm.tipe_invoice === 'MJU' ? nextMJUNumber.value : nextBIPNumber.value;
@@ -332,7 +336,8 @@ const submitCreate = () => {
         onSuccess: () => {
             closeCreateModal();
         },
-        preserveScroll: true,
+        preserveState: false,
+        preserveScroll: false,
     });
 };
 
@@ -411,14 +416,15 @@ const submitEdit = () => {
         onSuccess: () => {
             closeEditModal();
         },
-        preserveScroll: true,
+        preserveState: false,
+        preserveScroll: false,
     });
 };
 
 const handleFilter = () => {
     const params = selectedFilter.value ? { tipe_invoice: selectedFilter.value } : {};
     router.get(route('invoice.index'), params, { 
-        preserveState: true,
+        preserveState: false,
         preserveScroll: true,
     });
 };
@@ -444,7 +450,8 @@ const printSingleInvoice = (invoiceId, size = 'a4') => {
 const deleteInvoice = (invoiceId, invoiceNumber) => {
     if (confirm(`Apakah Anda yakin ingin menghapus invoice ${invoiceNumber}?`)) {
         router.delete(route('invoice.destroy', invoiceId), {
-            preserveScroll: true,
+            preserveState: false,
+            preserveScroll: false,
         });
     }
 };
