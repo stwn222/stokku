@@ -1,4 +1,5 @@
 <script setup>
+import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Package, TrendingUp, TrendingDown, Users, Layers, Box } from 'lucide-vue-next';
@@ -23,6 +24,49 @@ const props = defineProps({
         type: Array,
         default: () => []
     },
+});
+
+// 1. Buat ref untuk menampung nilai input pencarian
+const searchQuery = ref('');
+
+// 2. Buat computed property untuk memfilter 'recentBarangMasuk'
+const filteredBarangMasuk = computed(() => {
+    if (!searchQuery.value) {
+        return props.recentBarangMasuk; // Kembalikan semua jika search kosong
+    }
+
+    const query = searchQuery.value.toLowerCase();
+
+    return props.recentBarangMasuk.filter(item => {
+        // Cek null/undefined dengan aman menggunakan optional chaining (?.)
+        const namaBarang = item.barang?.nama_barang?.toLowerCase() || '';
+        const idBarang = item.barang?.id_barang?.toLowerCase() || '';
+        const userName = item.user?.name?.toLowerCase() || '';
+
+        // Kembalikan true jika salah satu kriteria cocok
+        return namaBarang.includes(query) ||
+            idBarang.includes(query) ||
+            userName.includes(query);
+    });
+});
+
+// 3. Buat computed property untuk memfilter 'recentBarangKeluar'
+const filteredBarangKeluar = computed(() => {
+    if (!searchQuery.value) {
+        return props.recentBarangKeluar; // Kembalikan semua jika search kosong
+    }
+
+    const query = searchQuery.value.toLowerCase();
+
+    return props.recentBarangKeluar.filter(item => {
+        const namaBarang = item.barang?.nama_barang?.toLowerCase() || '';
+        const idBarang = item.barang?.id_barang?.toLowerCase() || '';
+        const userName = item.user?.name?.toLowerCase() || '';
+
+        return namaBarang.includes(query) ||
+            idBarang.includes(query) ||
+            userName.includes(query);
+    });
 });
 
 const formatTanggal = (tanggalString) => {
@@ -169,6 +213,7 @@ const formatTanggal = (tanggalString) => {
                             type="text"
                             class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
                             placeholder="Cari..."
+                            v-model="searchQuery"
                         />
                     </div>
                 </div>
@@ -188,7 +233,7 @@ const formatTanggal = (tanggalString) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(item, index) in recentBarangMasuk" :key="index" class="hover:bg-gray-50">
+                                <tr v-for="(item, index) in filteredBarangMasuk" :key="index" class="hover:bg-gray-50">
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ index + 1 }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang?.id_barang || '-' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang?.nama_barang || '-' }}</td>
@@ -198,9 +243,9 @@ const formatTanggal = (tanggalString) => {
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.user?.name || '-' }}</td>
                                 </tr>
-                                <tr v-if="!recentBarangMasuk || recentBarangMasuk.length === 0">
+                                <tr v-if="!filteredBarangMasuk || filteredBarangMasuk.length === 0">
                                     <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
-                                        Tidak ada data barang masuk
+                                        {{ searchQuery ? 'Tidak ada data yang sesuai dengan pencarian' : 'Tidak ada data barang masuk' }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -223,7 +268,7 @@ const formatTanggal = (tanggalString) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(item, index) in recentBarangKeluar" :key="index" class="hover:bg-gray-50">
+                                <tr v-for="(item, index) in filteredBarangKeluar" :key="index" class="hover:bg-gray-50">
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ index + 1 }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang?.id_barang || '-' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang?.nama_barang || '-' }}</td>
@@ -233,9 +278,9 @@ const formatTanggal = (tanggalString) => {
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.user?.name || '-' }}</td>
                                 </tr>
-                                <tr v-if="!recentBarangKeluar || recentBarangKeluar.length === 0">
+                                <tr v-if="!filteredBarangKeluar || filteredBarangKeluar.length === 0">
                                     <td colspan="6" class="px-4 py-8 text-center text-gray-500 border">
-                                        Tidak ada data barang keluar
+                                        {{ searchQuery ? 'Tidak ada data yang sesuai dengan pencarian' : 'Tidak ada data barang keluar' }}
                                     </td>
                                 </tr>
                             </tbody>

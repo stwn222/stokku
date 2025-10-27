@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Home, ChevronRight, Printer } from 'lucide-vue-next';
@@ -14,14 +14,37 @@ const search = ref(props.filters?.search || '');
 const tanggalAwal = ref(props.filters?.tanggal_awal || '');
 const tanggalAkhir = ref(props.filters?.tanggal_akhir || '');
 
-watch([perPage, search], () => {
+// Untuk filter lokal (frontend) pada tabel
+const localSearch = ref('');
+
+// Computed property untuk filter data di frontend
+const filteredData = computed(() => {
+    if (!localSearch.value) {
+        return props.barangKeluars.data;
+    }
+
+    const query = localSearch.value.toLowerCase();
+    
+    return props.barangKeluars.data.filter(item => {
+        const kodeTransaksi = item.kode_transaksi?.toLowerCase() || '';
+        const namaBarang = item.barang?.nama_barang?.toLowerCase() || '';
+        const keterangan = item.keterangan?.toLowerCase() || '';
+        const satuan = item.barang?.satuan?.nama_satuan?.toLowerCase() || '';
+        
+        return kodeTransaksi.includes(query) ||
+               namaBarang.includes(query) ||
+               keterangan.includes(query) ||
+               satuan.includes(query);
+    });
+});
+
+watch([perPage], () => {
     applyFilter();
 });
 
 const applyFilter = () => {
     router.get(route('laporan-barang-keluar.index'), {
         per_page: perPage.value,
-        search: search.value,
         tanggal_awal: tanggalAwal.value,
         tanggal_akhir: tanggalAkhir.value,
     }, {
@@ -56,7 +79,7 @@ const cetakLaporan = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     
     let tableRows = '';
-    props.barangKeluars.data.forEach((item, index) => {
+    filteredData.value.forEach((item, index) => {
         tableRows += `
             <tr>
                 <td style="border: 1px solid #000; padding: 8px; text-align: center;">${index + 1}</td>
@@ -91,13 +114,13 @@ const cetakLaporan = () => {
                 }
                 h1 {
                     text-align: center;
-                    margin: 0 0 10px 0;
-                    font-size: 20px;
+                    margin: 0 0 5px 0;
+                    font-size: 12px;
                     text-transform: uppercase;
                 }
                 .periode {
                     text-align: center;
-                    margin-bottom: 30px;
+                    margin-bottom: 5px;
                     font-size: 12px;
                     padding-bottom: 15px;
                     border-bottom: 3px solid #000;
@@ -120,28 +143,23 @@ const cetakLaporan = () => {
                     font-size: 11px;
                 }
                 .footer {
-                    margin-top: 40px;
                     font-size: 11px;
                 }
                 .print-date {
-                    margin-bottom: 50px;
-                }
-                .signature {
-                    text-align: right;
-                    margin-top: 40px;
-                }
-                .signature-label {
-                    font-weight: bold;
-                    margin-bottom: 60px;
-                }
-                .signature-line {
-                    border-top: 1px solid #000;
-                    width: 200px;
-                    margin-left: auto;
+                    margin-bottom: 5px;
                 }
             </style>
         </head>
         <body>
+            <div class="footer">
+                <div class="print-date">
+                    Dicetak pada: ${new Date().toLocaleDateString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    })}
+                </div>
+            </div>
             <h1>LAPORAN BARANG KELUAR</h1>
             <div class="periode">${periodeText}</div>
             <table>
@@ -160,19 +178,6 @@ const cetakLaporan = () => {
                     ${tableRows}
                 </tbody>
             </table>
-            <div class="footer">
-                <div class="print-date">
-                    Dicetak pada: ${new Date().toLocaleDateString('id-ID', { 
-                        day: '2-digit', 
-                        month: 'long', 
-                        year: 'numeric' 
-                    })}
-                </div>
-                <div class="signature">
-                    <div class="signature-label">Administrator</div>
-                    <div class="signature-line"></div>
-                </div>
-            </div>
         </body>
         </html>
     `);
@@ -270,7 +275,7 @@ const cetakLaporan = () => {
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Cari:</label>
                         <input 
-                            v-model="search"
+                            v-model="localSearch"
                             type="text"
                             class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
                             placeholder="Cari data..."
@@ -294,12 +299,12 @@ const cetakLaporan = () => {
                         </thead>
                         <tbody>
                             <tr 
-                                v-for="(item, index) in barangKeluars.data" 
+                                v-for="(item, index) in filteredData" 
                                 :key="item.id"
                                 class="hover:bg-gray-50"
                             >
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ barangKeluars.from + index }}
+                                    {{ index + 1 }}
                                 </td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                                     {{ item.kode_transaksi }}
@@ -320,9 +325,12 @@ const cetakLaporan = () => {
                                     {{ item.keterangan }}
                                 </td>
                             </tr>
-                            <tr v-if="barangKeluars.data.length === 0">
+                            <tr v-if="filteredData.length === 0">
                                 <td colspan="7" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                    <span v-if="!tanggalAwal || !tanggalAkhir">
+                                    <span v-if="localSearch">
+                                        Tidak ada data yang sesuai dengan pencarian
+                                    </span>
+                                    <span v-else-if="!tanggalAwal || !tanggalAkhir">
                                         Silakan pilih tanggal untuk menampilkan data
                                     </span>
                                     <span v-else>
@@ -336,7 +344,8 @@ const cetakLaporan = () => {
 
                 <!-- Pagination Info -->
                 <div class="mt-4 text-sm text-gray-700">
-                    Menampilkan {{ barangKeluars.from || 0 }} sampai {{ barangKeluars.to || 0 }} dari {{ barangKeluars.total || 0 }} data
+                    Menampilkan {{ filteredData.length }} dari {{ barangKeluars.total || 0 }} data
+                    <span v-if="localSearch" class="text-blue-600">(difilter dari pencarian)</span>
                 </div>
 
                 <!-- Pagination Controls -->

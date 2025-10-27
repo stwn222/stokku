@@ -496,12 +496,12 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                 >
                     Tampilkan
                 </button>
-                <button
+                <!-- <button
                     @click="handlePrint"
                     class="px-8 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition font-medium"
                 >
                     Cetak Semua
-                </button>
+                </button> -->
             </div>
         </div>
 

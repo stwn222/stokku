@@ -58,12 +58,6 @@ const companyName = computed(() => {
         : 'CV. Media Jaya Utama';
 });
 
-const accountName = computed(() => {
-    return props.invoice.tipe_invoice === 'BIP'
-        ? 'PT. BHAKTI INTI PRATAMA'
-        : 'CV. MEDIA JAYA UTAMA';
-});
-
 onMounted(() => {
     setTimeout(() => {
         window.print();
@@ -120,7 +114,7 @@ onMounted(() => {
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">A/c Name</span>
-                            <span class="pay-value">: {{ accountName }}</span>
+                            <span class="pay-value">: CV. Media Jaya Utama</span>
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">Bank Details</span>
@@ -169,7 +163,6 @@ onMounted(() => {
                 <div class="terima-section">
                     <div class="terima-title">TANDA TERIMA</div>
                     <div class="terima-content">
-                        <div class="terbilang-text">{{ formatTerbilang }}</div>
                         <div class="signature-area">
                             <div class="signature-line">
                                 <span>(...................................)</span>
@@ -191,6 +184,7 @@ onMounted(() => {
                         <span class="sum-label">TOTAL HARGA</span>
                         <span class="sum-value">{{ total.toLocaleString('id-ID') }}</span>
                     </div>
+                    <div class="terbilang-text">{{ formatTerbilang }}</div>
                 </div>
             </div>
         </div>
@@ -269,9 +263,8 @@ onMounted(() => {
 
 /* NOMOR INVOICE DAN TANGGAL DI TENGAH */
 .invoice-meta-center {
-    text-align: center;
+    text-align: start;
     font-size: 10px;
-    margin: 12px 0;
 }
 
 .meta-divider {
@@ -417,6 +410,7 @@ onMounted(() => {
     font-size: 10px;
     font-weight: bold;
     margin-bottom: 8px;
+    margin-left: 4px;
 }
 
 .terima-content {
@@ -426,6 +420,7 @@ onMounted(() => {
 
 .terbilang-text {
     font-size: 9px;
+    text-align: center;
     font-style: italic;
     line-height: 1.4;
     margin-bottom: 25px;
@@ -436,6 +431,7 @@ onMounted(() => {
 }
 
 .signature-line {
+    line-height: 80px;
     text-align: left;
     font-size: 9px;
 }

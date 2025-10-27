@@ -58,11 +58,6 @@ const companyName = computed(() => {
         : 'CV. Media Jaya Utama';
 });
 
-const accountName = computed(() => {
-    return props.invoice.tipe_invoice === 'BIP'
-        ? 'PT. BHAKTI INTI PRATAMA'
-        : 'CV. MEDIA JAYA UTAMA';
-});
 
 onMounted(() => {
     setTimeout(() => {
@@ -120,7 +115,7 @@ onMounted(() => {
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">A/c Name</span>
-                            <span class="pay-value">: {{ accountName }}</span>
+                            <span class="pay-value">: CV. Media Jaya Utama</span>
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">Bank Details</span>
@@ -169,7 +164,6 @@ onMounted(() => {
                 <div class="terima-section">
                     <div class="terima-title">TANDA TERIMA</div>
                     <div class="terima-content">
-                        <div class="terbilang-text">{{ formatTerbilang }}</div>
                         <div class="signature-area">
                             <div class="signature-line">
                                 <span>(...................................)</span>
@@ -191,6 +185,7 @@ onMounted(() => {
                         <span class="sum-label">TOTAL HARGA</span>
                         <span class="sum-value">{{ total.toLocaleString('id-ID') }}</span>
                     </div>
+                    <div class="terbilang-text">{{ formatTerbilang }}</div>
                 </div>
             </div>
         </div>
@@ -269,9 +264,8 @@ onMounted(() => {
 
 /* NOMOR INVOICE DAN TANGGAL DI TENGAH */
 .invoice-meta-center {
-    text-align: center;
+    text-align: start;
     font-size: 8px;
-    margin: 8px 0;
 }
 
 .meta-divider {
@@ -417,6 +411,7 @@ onMounted(() => {
     font-size: 8px;
     font-weight: bold;
     margin-bottom: 5px;
+    margin-left: 14px;
 }
 
 .terima-content {
@@ -429,8 +424,7 @@ onMounted(() => {
     font-style: italic;
     line-height: 1.3;
     margin-bottom: 15px;
-    text-align: right;
-    line-height: end;
+    text-align: center;
 }
 
 .signature-area {
@@ -438,6 +432,7 @@ onMounted(() => {
 }
 
 .signature-line {
+    line-height: 80px;
     text-align: left;
     font-size: 7px;
 }

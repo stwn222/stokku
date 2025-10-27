@@ -83,8 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/invoice/{invoice}', [InvoiceController::class, 'update'])->name('invoice.update');
     Route::delete('/invoice/{invoice}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
     
-    // PENTING: Route print harus di atas route print-single
-    Route::get('/invoice/print', [InvoiceController::class, 'print'])->name('invoice.print');
+    // // PENTING: Route print harus di atas route print-single
+    // Route::get('/invoice/print', [InvoiceController::class, 'print'])->name('invoice.print');
     Route::get('/invoice/{id}/print-single', [InvoiceController::class, 'printSingle'])->name('invoice.print-single');
     Route::get('/invoice/{id}/print-single-a5', [InvoiceController::class, 'printSingleA5'])->name('invoice.print-single-a5');
     

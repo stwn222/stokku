@@ -90,13 +90,13 @@ const cetakLaporan = () => {
                 }
                 h1 {
                     text-align: center;
-                    margin: 0 0 10px 0;
+                    margin: 0 0 5px 0;
                     font-size: 20px;
                     text-transform: uppercase;
                 }
                 .periode {
                     text-align: center;
-                    margin-bottom: 30px;
+                    margin-bottom: 15px;
                     font-size: 12px;
                     padding-bottom: 15px;
                     border-bottom: 3px solid #000;
@@ -119,11 +119,10 @@ const cetakLaporan = () => {
                     font-size: 11px;
                 }
                 .footer {
-                    margin-top: 40px;
                     font-size: 11px;
                 }
                 .print-date {
-                    margin-bottom: 50px;
+                    margin-bottom: 5px;
                 }
                 .signature {
                     text-align: right;
@@ -141,6 +140,14 @@ const cetakLaporan = () => {
             </style>
         </head>
         <body>
+            <div class="footer">
+                <div class="print-date">
+                    Dicetak pada: ${new Date().toLocaleDateString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    })}
+            </div>
             <h1>LAPORAN BARANG MASUK</h1>
             <div class="periode">${periodeText}</div>
             <table>
@@ -158,19 +165,6 @@ const cetakLaporan = () => {
                     ${tableRows}
                 </tbody>
             </table>
-            <div class="footer">
-                <div class="print-date">
-                    Dicetak pada: ${new Date().toLocaleDateString('id-ID', { 
-                        day: '2-digit', 
-                        month: 'long', 
-                        year: 'numeric' 
-                    })}
-                </div>
-                <div class="signature">
-                    <div class="signature-label">Administrator</div>
-                    <div class="signature-line"></div>
-                </div>
-            </div>
         </body>
         </html>
     `);

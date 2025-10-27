@@ -13,14 +13,37 @@ const perPage = ref(props.filters.per_page || 10);
 const search = ref(props.filters.search || '');
 const filterStok = ref(props.filters.filter_stok || 'all');
 
-watch([perPage, search], () => {
+// Local search untuk filter di frontend
+const localSearch = ref('');
+
+// Computed property untuk filter data di frontend
+const filteredData = computed(() => {
+    if (!localSearch.value) {
+        return props.barangs.data;
+    }
+
+    const query = localSearch.value.toLowerCase();
+    
+    return props.barangs.data.filter(barang => {
+        const idBarang = barang.id_barang?.toLowerCase() || '';
+        const namaBarang = barang.nama_barang?.toLowerCase() || '';
+        const jenisBarang = barang.jenis_barang?.nama_jenis?.toLowerCase() || '';
+        const satuan = barang.satuan?.nama_satuan?.toLowerCase() || '';
+        
+        return idBarang.includes(query) ||
+               namaBarang.includes(query) ||
+               jenisBarang.includes(query) ||
+               satuan.includes(query);
+    });
+});
+
+watch([perPage], () => {
     applyFilters();
 });
 
 const applyFilters = () => {
     router.get(route('laporan-stok.index'), {
         per_page: perPage.value,
-        search: search.value,
         filter_stok: filterStok.value,
     }, {
         preserveState: true,
@@ -32,24 +55,6 @@ const handleFilterStok = () => {
     applyFilters();
 };
 
-const isStokMinimum = (barang) => {
-    return barang.stok <= (barang.stok_minimum || 0);
-};
-
-const isStokMaksimum = (barang) => {
-    return barang.stok >= (barang.stok_maksimum || 0);
-};
-
-const shouldHighlight = (barang) => {
-    if (filterStok.value === 'minimum' && isStokMinimum(barang)) {
-        return true;
-    }
-    if (filterStok.value === 'maximum' && isStokMinimum(barang)) {
-        return true;
-    }
-    return false;
-};
-
 // Helper function untuk cek stok rendah
 const isLowStock = (barang) => {
     return barang.stok < 10;
@@ -59,11 +64,9 @@ const printReport = () => {
     const printWindow = window.open('', '', 'width=800,height=600');
     
     let tableRows = '';
-    props.barangs.data.forEach((barang, index) => {
+    filteredData.value.forEach((barang, index) => {
         let bgColor = '';
-        if (shouldHighlight(barang)) {
-            bgColor = 'background-color: #fef08a;'; // Yellow for min/max
-        } else if (isLowStock(barang)) {
+        if (isLowStock(barang)) {
             bgColor = 'background-color: #fee2e2;'; // Red for low stock
         }
         
@@ -84,7 +87,7 @@ const printReport = () => {
     });
 
     const filterLabel = filterStok.value === 'all' ? 'Semua Stok' : 
-                       filterStok.value === 'minimum' ? 'Stok Minimum' : 'Stok Maksimum';
+                       filterStok.value === 'minimum' ? 'Stok Minimum' : 'Seluruh Stok';
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -97,8 +100,9 @@ const printReport = () => {
                     margin: 20px;
                 }
                 h1 {
+                    font-size:18px;
                     text-align: center;
-                    margin-bottom: 10px;
+                    margin-bottom: 5px;
                 }
                 .info {
                     text-align: center;
@@ -157,9 +161,6 @@ const printReport = () => {
                     ${tableRows}
                 </tbody>
             </table>
-            <div class="footer">
-                Dicetak oleh: Administrator
-            </div>
         </body>
         </html>
     `);
@@ -176,7 +177,7 @@ const printReport = () => {
 const exportToExcel = async () => {
     try {
         const response = await fetch(route('laporan-stok.export-excel') + 
-            `?search=${search.value}&filter_stok=${filterStok.value}`);
+            `?filter_stok=${filterStok.value}`);
         const result = await response.json();
         
         if (!result.data || result.data.length === 0) {
@@ -306,7 +307,7 @@ const exportToExcel = async () => {
                     <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-700">Cari:</label>
                         <input 
-                            v-model="search"
+                            v-model="localSearch"
                             type="text"
                             class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
                             placeholder="Cari barang..."
@@ -315,15 +316,9 @@ const exportToExcel = async () => {
                 </div>
 
                 <!-- Legend -->
-                <div class="flex items-center gap-4 text-xs mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 bg-yellow-200 border border-yellow-400 rounded"></div>
-                        <span class="text-gray-600">Stok Mencapai Batas (Min/Maks)</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-                        <span class="text-gray-600">Stok Rendah (&lt; 10)</span>
-                    </div>
+                <div class="flex items-center gap-2 text-xs mb-4">
+                    <div class="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
+                    <span class="text-gray-600">Stok Rendah (&lt; 10)</span>
                 </div>
 
                 <!-- Table -->
@@ -331,7 +326,6 @@ const exportToExcel = async () => {
                     <table class="w-full border-collapse">
                         <thead>
                             <tr class="bg-gray-50">
-                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">No</th>
                                 <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Kode Barang</th>
                                 <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
                                 <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Jenis Barang</th>
@@ -341,16 +335,15 @@ const exportToExcel = async () => {
                         </thead>
                         <tbody>
                             <tr 
-                                v-for="(barang, index) in barangs.data" 
+                                v-for="(barang, index) in filteredData" 
                                 :key="barang.id"
                                 :class="[
                                     'hover:bg-gray-50',
-                                    shouldHighlight(barang) ? 'bg-yellow-200' : '',
-                                    isLowStock(barang) && !shouldHighlight(barang) ? 'bg-red-100' : ''
+                                    isLowStock(barang) ? 'bg-red-100' : ''
                                 ]"
                             >
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ barangs.from + index }}
+                                    {{ index + 1 }}
                                 </td>
                                 <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
                                     {{ barang.id_barang }}
@@ -376,9 +369,14 @@ const exportToExcel = async () => {
                                     {{ barang.satuan.nama_satuan }}
                                 </td>
                             </tr>
-                            <tr v-if="barangs.data.length === 0">
+                            <tr v-if="filteredData.length === 0">
                                 <td colspan="6" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                    Tidak ada data barang
+                                    <span v-if="localSearch">
+                                        Tidak ada data yang sesuai dengan pencarian
+                                    </span>
+                                    <span v-else>
+                                        Tidak ada data barang
+                                    </span>
                                 </td>
                             </tr>
                         </tbody>
@@ -387,7 +385,8 @@ const exportToExcel = async () => {
 
                 <!-- Pagination Info -->
                 <div class="mt-4 text-sm text-gray-700">
-                    Menampilkan {{ barangs.from || 0 }} sampai {{ barangs.to || 0 }} dari {{ barangs.total }} data
+                    Menampilkan {{ filteredData.length }} dari {{ barangs.total }} data
+                    <span v-if="localSearch" class="text-blue-600">(difilter dari pencarian)</span>
                 </div>
 
                 <!-- Pagination Controls -->
