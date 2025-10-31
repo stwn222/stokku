@@ -137,16 +137,16 @@ onMounted(() => {
             <table class="invoice-table">
                 <thead>
                     <tr>
-                        <th class="th-qty">QTY</th>
                         <th class="th-desc">DESKRIPSI</th>
+                        <th class="th-qty">QTY</th>
                         <th class="th-price">HARGA UNIT</th>
                         <th class="th-total">TOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="detail in invoice.details" :key="detail.id">
-                        <td class="td-center">{{ detail.qty }}</td>
                         <td class="td-left">{{ detail.barang?.nama_barang || '-' }}</td>
+                        <td class="td-center">{{ detail.qty }}</td>
                         <td class="td-right">{{ Number(detail.harga).toLocaleString('id-ID') }}</td>
                         <td class="td-right">{{ (detail.qty * detail.harga).toLocaleString('id-ID') }}</td>
                     </tr>
