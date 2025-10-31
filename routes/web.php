@@ -12,6 +12,9 @@ use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\BarangKeluarController;
+use App\Http\Controllers\ReturnBarangController;
+use App\Http\Controllers\LaporanReturnController;
+use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\LaporanBarangMasukController;
 use App\Http\Controllers\LaporanBarangKeluarController;
@@ -75,6 +78,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Laporan Barang Keluar Routes
     Route::get('/laporan-barang-keluar', [LaporanBarangKeluarController::class, 'index'])->name('laporan-barang-keluar.index');
 
+    // Laporan Return Routes
+    Route::get('/laporan-return', [LaporanReturnController::class, 'index'])->name('laporan-return.index');
+
     // Invoice Routes
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice.index');
     Route::get('/invoice/create', [InvoiceController::class, 'create'])->name('invoice.create');
@@ -82,11 +88,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/invoice/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoice.edit');
     Route::put('/invoice/{invoice}', [InvoiceController::class, 'update'])->name('invoice.update');
     Route::delete('/invoice/{invoice}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
-    
-    // // PENTING: Route print harus di atas route print-single
-    // Route::get('/invoice/print', [InvoiceController::class, 'print'])->name('invoice.print');
     Route::get('/invoice/{id}/print-single', [InvoiceController::class, 'printSingle'])->name('invoice.print-single');
     Route::get('/invoice/{id}/print-single-a5', [InvoiceController::class, 'printSingleA5'])->name('invoice.print-single-a5');
+
+    // Payment Method Routes
+    Route::get('/payment-method', [PaymentMethodController::class, 'index'])->name('payment-method.index');
+    Route::post('/payment-method', [PaymentMethodController::class, 'store'])->name('payment-method.store');
+    Route::put('/payment-method/{paymentMethod}', [PaymentMethodController::class, 'update'])->name('payment-method.update');
+    Route::delete('/payment-method/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('payment-method.destroy');
+    
+    // Return Barang Routes
+    Route::post('/return-barang', [ReturnBarangController::class, 'store'])->name('return-barang.store');
     
     // API Invoice Next Number
     Route::get('/api/invoice-next-number/{tipe}', function($tipe) {

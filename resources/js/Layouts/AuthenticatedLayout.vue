@@ -1,4 +1,3 @@
-<!-- resources/js/Layouts/AuthenticatedLayout.vue - UPDATED -->
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
@@ -7,12 +6,13 @@ import {
     Home, 
     Package, 
     TrendingUp, 
-    TrendingDown, 
     FileText, 
     Users,
     Menu,
-    X
+    X,
+    CreditCard
 } from 'lucide-vue-next';
+
 
 const page = usePage();
 const showingSidebar = ref(true);
@@ -20,7 +20,6 @@ const expandedMenus = ref({
     barang: false,
 });
 
-// Check user role - dengan pengecekan aman
 const isAdministrator = computed(() => {
     return page.props.auth?.user?.hak_akses === 'Administrator';
 });
@@ -96,8 +95,16 @@ const toggleSidebar = () => {
                     >
                         <div class="flex items-center gap-3">
                             <Package :size="20" />
-                            <span class="font-medium">Barang</span>
+                            <Link 
+                            :href="route('barang.index')"
+                            class="flex items-center gap-2 px-4 py-2 text-sm text-white"
+                        >
+                            <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                            Data Barang
+                        </Link>
+                       
                         </div>
+                         
                         <ChevronDown 
                             :size="18" 
                             :class="{ 'rotate-180': expandedMenus.barang }"
@@ -110,13 +117,6 @@ const toggleSidebar = () => {
                         v-show="expandedMenus.barang"
                         class="ml-4 mt-1 space-y-1 border-l-2 border-gray-200"
                     >
-                        <Link 
-                            :href="route('barang.index')"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-r-lg transition"
-                        >
-                            <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                            Data Barang
-                        </Link>
                         <Link 
                             :href="route('jenis-barang.index')"
                             class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-r-lg transition"
@@ -132,6 +132,14 @@ const toggleSidebar = () => {
                             Satuan
                         </Link>
                     </div>
+                    <Link 
+                            :href="route('payment-method.index')"
+                            :class="{ 'bg-gray-100': route().current('payment-method.*') }"
+                            class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+                        >
+                            <CreditCard :size="20" />
+                            <span class="font-medium">Metode Pembayaran</span>
+                        </Link>
                 </div>
 
                 <!-- TRANSAKSI Section -->
@@ -148,15 +156,6 @@ const toggleSidebar = () => {
                 >
                     <TrendingUp :size="20" />
                     <span class="font-medium">Barang Masuk</span>
-                </Link>
-
-                <Link 
-                    :href="route('barang-keluar.index')"
-                    :class="{ 'bg-gray-100': route().current('barang-keluar.*') }"
-                    class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
-                >
-                    <TrendingDown :size="20" />
-                    <span class="font-medium">Barang Keluar</span>
                 </Link>
 
                 <!-- LAPORAN Section - Only for Administrator -->
@@ -192,6 +191,15 @@ const toggleSidebar = () => {
                     >
                         <FileText :size="20" />
                         <span class="font-medium">Laporan Barang Keluar</span>
+                    </Link>
+
+                    <Link 
+                        :href="route('laporan-return.index')"
+                        :class="{ 'bg-gray-100': route().current('laporan-return.*') }"
+                        class="flex items-center gap-3 px-4 py-3 mb-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+                    >
+                        <FileText :size="20" />
+                        <span class="font-medium">Laporan Return</span>
                     </Link>
 
                     <Link 

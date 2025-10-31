@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\InvoiceDetail;
 use App\Models\Barang;
+use App\Models\BarangKeluar;
+use App\Models\PaymentMethod;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +17,7 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Invoice::with(['user', 'details.barang'])->latest();
+        $query = Invoice::with(['user', 'details.barang', 'paymentMethod'])->latest();
         
         if ($request->filled('tipe_invoice')) {
             $query->where('tipe_invoice', $request->tipe_invoice);
@@ -24,13 +26,19 @@ class InvoiceController extends Controller
         $invoices = $query->paginate(10);
         
         $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
+            ->where('stok', '>', 0)
             ->orderBy('nama_barang', 'asc')
+            ->get();
+        
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->orderBy('nama_metode', 'asc')
             ->get();
         
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,
             'filters' => $request->only(['tipe_invoice']),
             'barangList' => $barangList,
+            'paymentMethods' => $paymentMethods,
             'nextMJUNumber' => $this->getNextInvoiceNumber('MJU'),
             'nextBIPNumber' => $this->getNextInvoiceNumber('BIP'),
         ]);
@@ -39,11 +47,17 @@ class InvoiceController extends Controller
     public function create()
     {
         $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
+            ->where('stok', '>', 0)
             ->orderBy('nama_barang', 'asc')
+            ->get();
+        
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->orderBy('nama_metode', 'asc')
             ->get();
         
         return Inertia::render('Invoice/Create', [
             'barangList' => $barangList,
+            'paymentMethods' => $paymentMethods,
             'nextMJUNumber' => $this->getNextInvoiceNumber('MJU'),
             'nextBIPNumber' => $this->getNextInvoiceNumber('BIP'),
         ]);
@@ -54,11 +68,11 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'tipe_invoice' => 'required|in:MJU,BIP',
             'nama_client' => 'required|string|max:255',
-            'nomor_client' => 'required|string|max:255',
             'tanggal' => 'required|date',
             'alamat_client' => 'required|string',
             'diskon' => 'nullable|numeric|min:0|max:100',
             'ppn' => 'nullable|boolean',
+            'payment_method_id' => 'required|exists:payment_methods,id',
             'details' => 'required|array|min:1',
             'details.*.barang_id' => 'required|exists:barangs,id',
             'details.*.qty' => 'required|numeric|min:1|integer',
@@ -67,6 +81,13 @@ class InvoiceController extends Controller
 
         try {
             DB::beginTransaction();
+
+            foreach ($validated['details'] as $detail) {
+                $barang = Barang::findOrFail($detail['barang_id']);
+                if ($barang->stok < $detail['qty']) {
+                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
+                }
+            }
 
             $nomorInvoice = $this->generateInvoiceNumber(
                 $validated['tipe_invoice'], 
@@ -78,11 +99,11 @@ class InvoiceController extends Controller
                 'tipe_invoice' => $validated['tipe_invoice'],
                 'nomor_invoice' => $nomorInvoice,
                 'nama_client' => $validated['nama_client'],
-                'nomor_client' => $validated['nomor_client'],
                 'tanggal' => $validated['tanggal'],
                 'alamat_client' => $validated['alamat_client'],
                 'diskon' => $validated['diskon'] ?? 0,
                 'ppn' => $validated['ppn'] ?? false,
+                'payment_method_id' => $validated['payment_method_id'],
             ]);
 
             foreach ($validated['details'] as $detail) {
@@ -91,6 +112,23 @@ class InvoiceController extends Controller
                     'barang_id' => $detail['barang_id'],
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
+                ]);
+
+                $barang = Barang::findOrFail($detail['barang_id']);
+                $barang->decrement('stok', $detail['qty']);
+
+                $kodeTransaksi = BarangKeluar::generateKodeTransaksi();
+                BarangKeluar::create([
+                    'kode_transaksi' => $kodeTransaksi,
+                    'barang_id' => $detail['barang_id'],
+                    'tanggal' => $validated['tanggal'],
+                    'jumlah' => $detail['qty'],
+                    'harga_jual' => $detail['harga'],
+                    'ppn' => $validated['ppn'] ? ($detail['harga'] * $detail['qty'] * 0.11) : 0,
+                    'total' => $detail['harga'] * $detail['qty'],
+                    'is_ppn' => $validated['ppn'] ?? false,
+                    'keterangan' => "Penjualan Invoice: {$nomorInvoice}",
+                    'user_id' => Auth::id(),
                 ]);
             }
 
@@ -111,9 +149,14 @@ class InvoiceController extends Controller
             ->orderBy('nama_barang', 'asc')
             ->get();
         
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->orderBy('nama_metode', 'asc')
+            ->get();
+        
         return Inertia::render('Invoice/Edit', [
-            'invoice' => $invoice->load('details.barang'),
+            'invoice' => $invoice->load('details.barang', 'paymentMethod'),
             'barangList' => $barangList,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 
@@ -121,11 +164,11 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'nama_client' => 'required|string|max:255',
-            'nomor_client' => 'required|string|max:255',
             'tanggal' => 'required|date',
             'alamat_client' => 'required|string',
             'diskon' => 'nullable|numeric|min:0|max:100',
             'ppn' => 'nullable|boolean',
+            'payment_method_id' => 'required|exists:payment_methods,id',
             'details' => 'required|array|min:1',
             'details.*.barang_id' => 'required|exists:barangs,id',
             'details.*.qty' => 'required|numeric|min:1|integer',
@@ -135,13 +178,27 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
+            foreach ($invoice->details as $oldDetail) {
+                $barang = Barang::findOrFail($oldDetail->barang_id);
+                $barang->increment('stok', $oldDetail->qty);
+            }
+
+            BarangKeluar::where('keterangan', 'like', "%Invoice: {$invoice->nomor_invoice}%")->delete();
+
+            foreach ($validated['details'] as $detail) {
+                $barang = Barang::findOrFail($detail['barang_id']);
+                if ($barang->stok < $detail['qty']) {
+                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi. Stok tersedia: {$barang->stok}, diminta: {$detail['qty']}");
+                }
+            }
+
             $invoice->update([
                 'nama_client' => $validated['nama_client'],
-                'nomor_client' => $validated['nomor_client'],
                 'tanggal' => $validated['tanggal'],
                 'alamat_client' => $validated['alamat_client'],
                 'diskon' => $validated['diskon'] ?? 0,
                 'ppn' => $validated['ppn'] ?? false,
+                'payment_method_id' => $validated['payment_method_id'],
             ]);
 
             $invoice->details()->delete();
@@ -152,6 +209,23 @@ class InvoiceController extends Controller
                     'barang_id' => $detail['barang_id'],
                     'qty' => $detail['qty'],
                     'harga' => $detail['harga'],
+                ]);
+
+                $barang = Barang::findOrFail($detail['barang_id']);
+                $barang->decrement('stok', $detail['qty']);
+
+                $kodeTransaksi = BarangKeluar::generateKodeTransaksi();
+                BarangKeluar::create([
+                    'kode_transaksi' => $kodeTransaksi,
+                    'barang_id' => $detail['barang_id'],
+                    'tanggal' => $validated['tanggal'],
+                    'jumlah' => $detail['qty'],
+                    'harga_jual' => $detail['harga'],
+                    'ppn' => $validated['ppn'] ? ($detail['harga'] * $detail['qty'] * 0.11) : 0,
+                    'total' => $detail['harga'] * $detail['qty'],
+                    'is_ppn' => $validated['ppn'] ?? false,
+                    'keterangan' => "Penjualan Invoice: {$invoice->nomor_invoice}",
+                    'user_id' => Auth::id(),
                 ]);
             }
 
@@ -171,6 +245,13 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
             
+            foreach ($invoice->details as $detail) {
+                $barang = Barang::findOrFail($detail->barang_id);
+                $barang->increment('stok', $detail->qty);
+            }
+
+            BarangKeluar::where('keterangan', 'like', "%Invoice: {$invoice->nomor_invoice}%")->delete();
+            
             $nomorInvoice = $invoice->nomor_invoice;
             $invoice->delete();
 
@@ -187,7 +268,7 @@ class InvoiceController extends Controller
 
     public function print(Request $request)
     {
-        $query = Invoice::with(['user', 'details.barang'])->latest();
+        $query = Invoice::with(['user', 'details.barang', 'paymentMethod'])->latest();
         
         if ($request->filled('tipe_invoice')) {
             $query->where('tipe_invoice', $request->tipe_invoice);
@@ -202,7 +283,7 @@ class InvoiceController extends Controller
 
     public function printSingle($id)
     {
-        $invoice = Invoice::with(['user', 'details.barang'])->findOrFail($id);
+        $invoice = Invoice::with(['user', 'details.barang', 'paymentMethod'])->findOrFail($id);
         
         return Inertia::render('Invoice/PrintSingle', [
             'invoice' => $invoice,
@@ -211,7 +292,7 @@ class InvoiceController extends Controller
 
     public function printSingleA5($id)
     {
-        $invoice = Invoice::with(['user', 'details.barang'])->findOrFail($id);
+        $invoice = Invoice::with(['user', 'details.barang', 'paymentMethod'])->findOrFail($id);
         
         return Inertia::render('Invoice/PrintSingleA5', [
             'invoice' => $invoice,

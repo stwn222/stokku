@@ -203,7 +203,7 @@ const formatDate = (date) => {
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Transaksi</th>
+                            <!-- <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Transaksi</th> -->
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Barang</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Tanggal</th>
@@ -218,12 +218,12 @@ const formatDate = (date) => {
                         <tr
                             v-for="(item, index) in barangMasuks.data"
                             :key="item.id"
-                            class="hover:bg-gray-50"
+                            class="hover:bg-gray-50"l
                         >
                             <td class="px-4 py-3 text-sm text-gray-700 border">
                                 {{ barangMasuks.from + index }}
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.kode_transaksi }}</td>
+                            <!-- <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.kode_transaksi }}</td> -->
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.id_barang }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.nama_barang }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatDate(item.tanggal) }}</td>
@@ -318,7 +318,7 @@ const formatDate = (date) => {
 
                 <form @submit.prevent="submitForm" class="p-6">
                     <div class="grid grid-cols-2 gap-6">
-                        <div>
+                        <!-- <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kode Transaksi :</label>
                             <input
                                 v-model="form.kode_transaksi"
@@ -326,7 +326,7 @@ const formatDate = (date) => {
                                 readonly
                                 class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50"
                             />
-                        </div>
+                        </div> -->
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Kode Barang :</label>

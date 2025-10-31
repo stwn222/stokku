@@ -2,14 +2,23 @@
 import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
-import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon, PrinterIcon } from 'lucide-vue-next';
+import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon, PrinterIcon, Check, ChevronsUpDown, AlertTriangle } from 'lucide-vue-next';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import {
+  Combobox,
+  ComboboxButton,
+  ComboboxInput,
+  ComboboxOptions,
+  ComboboxOption,
+  TransitionRoot,
+} from '@headlessui/vue';
 
 const page = usePage();
 const selectedFilter = ref(page.props.filters?.tipe_invoice || '');
 const invoices = ref(page.props.invoices);
 
 const initialBarangList = page.props.barangList || [];
+const paymentMethods = ref(page.props.paymentMethods || []);
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
@@ -22,31 +31,98 @@ const loadingBarang = ref(false);
 const createForm = useForm({
     tipe_invoice: 'MJU',
     nama_client: '',
-    nomor_client: '',
     tanggal: new Date().toISOString().split('T')[0],
     alamat_client: '',
     diskon: 0,
     ppn: false,
+    payment_method_id: null,
     details: [],
 });
 
 const editForm = useForm({
     nama_client: '',
-    nomor_client: '',
     tanggal: '',
     alamat_client: '',
     diskon: 0,
     ppn: false,
+    payment_method_id: null,
     details: [],
 });
 
-const selectedBarang = ref('');
+const selectedBarang = ref(null);
 const selectedQty = ref(1);
-const selectedBarangEdit = ref('');
+const selectedBarangEdit = ref(null);
 const selectedQtyEdit = ref(1);
 const barangList = ref(initialBarangList);
 const nextMJUNumber = ref(1);
 const nextBIPNumber = ref(1);
+
+const barangQueryCreate = ref('');
+const barangQueryEdit = ref('');
+const comboboxButtonRefCreate = ref(null);
+const comboboxButtonRefEdit = ref(null);
+
+const filteredBarangCreate = computed(() =>
+    barangQueryCreate.value === ''
+        ? barangList.value
+        : barangList.value.filter((barang) =>
+            barang.nama_barang
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes(barangQueryCreate.value.toLowerCase().replace(/\s+/g, '')) ||
+            barang.id_barang
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes(barangQueryCreate.value.toLowerCase().replace(/\s+/g, ''))
+        )
+);
+
+const filteredBarangEdit = computed(() =>
+    barangQueryEdit.value === ''
+        ? barangList.value
+        : barangList.value.filter((barang) =>
+            barang.nama_barang
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes(barangQueryEdit.value.toLowerCase().replace(/\s+/g, '')) ||
+            barang.id_barang
+                .toLowerCase()
+                .replace(/\s+/g, '')
+                .includes(barangQueryEdit.value.toLowerCase().replace(/\s+/g, ''))
+        )
+);
+
+const selectedBarangInfo = computed(() => {
+    if (!selectedBarang.value) return null;
+    return barangList.value.find(b => b.id === selectedBarang.value);
+});
+
+const selectedBarangEditInfo = computed(() => {
+    if (!selectedBarangEdit.value) return null;
+    return barangList.value.find(b => b.id === selectedBarangEdit.value);
+});
+
+const getAvailableStockCreate = (barangId) => {
+    const barang = barangList.value.find(b => b.id === barangId);
+    if (!barang) return 0;
+    
+    const usedInDetails = createForm.details
+        .filter(d => d.barang_id === barangId)
+        .reduce((sum, d) => sum + d.qty, 0);
+    
+    return barang.stok - usedInDetails;
+};
+
+const getAvailableStockEdit = (barangId) => {
+    const barang = barangList.value.find(b => b.id === barangId);
+    if (!barang) return 0;
+    
+    const usedInDetails = editForm.details
+        .filter(d => d.barang_id === barangId)
+        .reduce((sum, d) => sum + d.qty, 0);
+    
+    return barang.stok - usedInDetails;
+};
 
 watch(() => page.props.invoices, (newInvoices) => {
     invoices.value = newInvoices;
@@ -208,7 +284,11 @@ const openCreateModal = async () => {
         createForm.reset();
         createForm.tipe_invoice = 'MJU';
         createForm.tanggal = new Date().toISOString().split('T')[0];
+        createForm.payment_method_id = paymentMethods.value.length > 0 ? paymentMethods.value[0].id : null;
         createForm.details = [];
+        selectedBarang.value = null;
+        selectedQty.value = 1;
+        barangQueryCreate.value = '';
         currentStep.value = 1;
     } catch (error) {
         alert('Gagal membuka modal: ' + error.message);
@@ -224,11 +304,11 @@ const openEditModal = async (invoice) => {
         
         editingInvoice.value = invoice;
         editForm.nama_client = invoice.nama_client;
-        editForm.nomor_client = invoice.nomor_client;
         editForm.tanggal = invoice.tanggal;
         editForm.alamat_client = invoice.alamat_client;
         editForm.diskon = invoice.diskon;
         editForm.ppn = invoice.ppn;
+        editForm.payment_method_id = invoice.payment_method_id;
         editForm.details = invoice.details.map(d => ({
             barang_id: d.barang_id,
             id_barang: d.barang?.id_barang || '',
@@ -237,6 +317,9 @@ const openEditModal = async (invoice) => {
             harga: Number(d.harga),
         }));
         
+        selectedBarangEdit.value = null;
+        selectedQtyEdit.value = 1;
+        barangQueryEdit.value = '';
         currentEditStep.value = 1;
         showEditModal.value = true;
     } catch (error) {
@@ -248,8 +331,9 @@ const closeCreateModal = () => {
     showCreateModal.value = false;
     createForm.reset();
     currentStep.value = 1;
-    selectedBarang.value = '';
+    selectedBarang.value = null;
     selectedQty.value = 1;
+    barangQueryCreate.value = '';
 };
 
 const closeEditModal = () => {
@@ -257,8 +341,9 @@ const closeEditModal = () => {
     editForm.reset();
     editingInvoice.value = null;
     currentEditStep.value = 1;
-    selectedBarangEdit.value = '';
+    selectedBarangEdit.value = null;
     selectedQtyEdit.value = 1;
+    barangQueryEdit.value = '';
 };
 
 const addBarangCreate = () => {
@@ -267,13 +352,19 @@ const addBarangCreate = () => {
         return;
     }
 
-    const barang = barangList.value.find(b => b.id == selectedBarang.value);
+    const barang = barangList.value.find(b => b.id === selectedBarang.value);
     if (!barang) {
         alert('Barang tidak ditemukan');
         return;
     }
 
-    const existingDetail = createForm.details.find(d => d.barang_id == selectedBarang.value);
+    const availableStock = getAvailableStockCreate(selectedBarang.value);
+    if (selectedQty.value > availableStock) {
+        alert(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`);
+        return;
+    }
+
+    const existingDetail = createForm.details.find(d => d.barang_id === selectedBarang.value);
 
     if (existingDetail) {
         existingDetail.qty += parseInt(selectedQty.value);
@@ -287,12 +378,29 @@ const addBarangCreate = () => {
         });
     }
 
-    selectedBarang.value = '';
+    selectedBarang.value = null;
     selectedQty.value = 1;
+    barangQueryCreate.value = '';
 };
 
 const updateQtyCreate = (index, newQty) => {
     if (newQty < 1) return;
+    
+    const detail = createForm.details[index];
+    const barang = barangList.value.find(b => b.id === detail.barang_id);
+    if (!barang) return;
+    
+    const otherDetailsQty = createForm.details
+        .filter((d, i) => i !== index && d.barang_id === detail.barang_id)
+        .reduce((sum, d) => sum + d.qty, 0);
+    
+    const availableStock = barang.stok - otherDetailsQty;
+    
+    if (newQty > availableStock) {
+        alert(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`);
+        return;
+    }
+    
     createForm.details[index].qty = newQty;
 };
 
@@ -302,8 +410,8 @@ const removeBarangCreate = (index) => {
 
 const nextStepCreate = () => {
     if (currentStep.value === 1) {
-        if (!createForm.nama_client || !createForm.nomor_client || !createForm.alamat_client) {
-            alert('Harap lengkapi data client terlebih dahulu');
+        if (!createForm.nama_client || !createForm.alamat_client || !createForm.payment_method_id) {
+            alert('Harap lengkapi data client dan metode pembayaran terlebih dahulu');
             return;
         }
     }
@@ -332,9 +440,18 @@ const submitCreate = () => {
         return;
     }
 
+    if (!createForm.payment_method_id) {
+        alert('Pilih metode pembayaran');
+        return;
+    }
+
     createForm.post(route('invoice.store'), {
         onSuccess: () => {
             closeCreateModal();
+        },
+        onError: (errors) => {
+            const errorMessage = Object.values(errors).flat().join('\n');
+            alert(errorMessage);
         },
         preserveState: false,
         preserveScroll: false,
@@ -347,13 +464,19 @@ const addBarangEdit = () => {
         return;
     }
 
-    const barang = barangList.value.find(b => b.id == selectedBarangEdit.value);
+    const barang = barangList.value.find(b => b.id === selectedBarangEdit.value);
     if (!barang) {
         alert('Barang tidak ditemukan');
         return;
     }
 
-    const existingDetail = editForm.details.find(d => d.barang_id == selectedBarangEdit.value);
+    const availableStock = getAvailableStockEdit(selectedBarangEdit.value);
+    if (selectedQtyEdit.value > availableStock) {
+        alert(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`);
+        return;
+    }
+
+    const existingDetail = editForm.details.find(d => d.barang_id === selectedBarangEdit.value);
 
     if (existingDetail) {
         existingDetail.qty += parseInt(selectedQtyEdit.value);
@@ -367,8 +490,9 @@ const addBarangEdit = () => {
         });
     }
 
-    selectedBarangEdit.value = '';
+    selectedBarangEdit.value = null;
     selectedQtyEdit.value = 1;
+    barangQueryEdit.value = '';
 };
 
 const removeBarangEdit = (index) => {
@@ -377,13 +501,29 @@ const removeBarangEdit = (index) => {
 
 const updateQtyEdit = (index, newQty) => {
     if (newQty < 1) return;
+    
+    const detail = editForm.details[index];
+    const barang = barangList.value.find(b => b.id === detail.barang_id);
+    if (!barang) return;
+    
+    const otherDetailsQty = editForm.details
+        .filter((d, i) => i !== index && d.barang_id === detail.barang_id)
+        .reduce((sum, d) => sum + d.qty, 0);
+    
+    const availableStock = barang.stok - otherDetailsQty;
+    
+    if (newQty > availableStock) {
+        alert(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`);
+        return;
+    }
+    
     editForm.details[index].qty = newQty;
 };
 
 const nextStepEdit = () => {
     if (currentEditStep.value === 1) {
-        if (!editForm.nama_client || !editForm.nomor_client || !editForm.alamat_client) {
-            alert('Harap lengkapi data client terlebih dahulu');
+        if (!editForm.nama_client || !editForm.alamat_client || !editForm.payment_method_id) {
+            alert('Harap lengkapi data client dan metode pembayaran terlebih dahulu');
             return;
         }
     }
@@ -412,9 +552,18 @@ const submitEdit = () => {
         return;
     }
 
+    if (!editForm.payment_method_id) {
+        alert('Pilih metode pembayaran');
+        return;
+    }
+
     editForm.put(route('invoice.update', editingInvoice.value.id), {
         onSuccess: () => {
             closeEditModal();
+        },
+        onError: (errors) => {
+            const errorMessage = Object.values(errors).flat().join('\n');
+            alert(errorMessage);
         },
         preserveState: false,
         preserveScroll: false,
@@ -453,6 +602,18 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
             preserveState: false,
             preserveScroll: false,
         });
+    }
+};
+
+const handleComboboxFocusCreate = () => {
+    if (comboboxButtonRefCreate.value) {
+        comboboxButtonRefCreate.value.click();
+    }
+};
+
+const handleComboboxFocusEdit = () => {
+    if (comboboxButtonRefEdit.value) {
+        comboboxButtonRefEdit.value.click();
     }
 };
 </script>
@@ -496,12 +657,6 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                 >
                     Tampilkan
                 </button>
-                <!-- <button
-                    @click="handlePrint"
-                    class="px-8 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition font-medium"
-                >
-                    Cetak Semua
-                </button> -->
             </div>
         </div>
 
@@ -521,7 +676,7 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
-                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Nama Client</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Nama Customer</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Nomor Invoice</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Tanggal</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Tipe</th>
@@ -608,23 +763,26 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                         <div v-show="currentStep === 1">
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nama Client:</label>
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nama Customer:</label>
                                     <input v-model="createForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Client:</label>
-                                    <input v-model="createForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
+                                    <input v-model="createForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
-                                    <input v-model="createForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                                <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Invoice:</label>
                                     <input :value="currentInvoiceNumber" type="text" readonly class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Metode Pembayaran:</label>
+                                    <select v-model="createForm.payment_method_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option :value="null">-- Pilih Metode --</option>
+                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">{{ method.nama_metode }}</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -700,34 +858,49 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-4 pt-4 border-t">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Barang</label>
                                         <select v-model="selectedBarang" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                            <option value="">-- Pilih Barang --</option>
-                                            <option 
-                                                v-for="barang in barangList" 
-                                                :key="barang.id" 
-                                                :value="barang.id"
-                                            >
-                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }}
+                                            <option :value="null">-- Pilih Barang --</option>
+                                            <option v-for="barang in barangList" :key="barang.id" :value="barang.id">
+                                                {{ barang.nama_barang }} ({{ barang.id_barang }}) - Stok: {{ getAvailableStockCreate(barang.id) }}
                                             </option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
-                                        <input v-model.number="selectedQty" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                        <input 
+                                            v-model.number="selectedQty" 
+                                            type="number" 
+                                            min="1" 
+                                            :max="selectedBarangInfo ? getAvailableStockCreate(selectedBarangInfo.id) : 999999"
+                                            placeholder="1" 
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                        />
                                     </div>
-                                    <div class="flex items-end">
-                                        <button 
-                                            type="button" 
-                                            @click="addBarangCreate" 
-                                            :disabled="barangList.length === 0"
-                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <PlusIcon :size="16" />
-                                            Tambah
-                                        </button>
+                                </div>
+
+                                <div class="flex items-center justify-between mt-4">
+                                    <div v-if="selectedBarangInfo" class="flex-1 p-3 bg-blue-50 border border-blue-200 rounded-lg mr-4">
+                                        <div class="text-sm">
+                                            <div class="font-semibold text-gray-900">{{ selectedBarangInfo.nama_barang }}</div>
+                                            <div class="text-gray-600 mt-1">ID: {{ selectedBarangInfo.id_barang }}</div>
+                                            <div class="text-gray-600">Harga: Rp {{ Number(selectedBarangInfo.harga_jual).toLocaleString('id-ID') }}</div>
+                                            <div class="flex items-center gap-1 mt-1" :class="getAvailableStockCreate(selectedBarangInfo.id) < 10 ? 'text-red-600' : 'text-green-600'">
+                                                <AlertTriangle v-if="getAvailableStockCreate(selectedBarangInfo.id) < 10" :size="14" />
+                                                Stok Tersedia: {{ getAvailableStockCreate(selectedBarangInfo.id) }}
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button 
+                                        type="button" 
+                                        @click="addBarangCreate" 
+                                        :disabled="barangList.length === 0 || !selectedBarang"
+                                        class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <PlusIcon :size="16" />
+                                        Tambah
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -786,23 +959,26 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                         <div v-show="currentEditStep === 1">
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nama Client:</label>
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nama Customer:</label>
                                     <input v-model="editForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Client:</label>
-                                    <input v-model="editForm.nomor_client" type="text" placeholder="Masukan Nomor Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
+                                    <input v-model="editForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
-                                    <input v-model="editForm.tanggal" type="date" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-                                </div>
-                                <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nomor Invoice:</label>
                                     <input :value="editingInvoice?.nomor_invoice" type="text" readonly class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-900 mb-2">Metode Pembayaran:</label>
+                                    <select v-model="editForm.payment_method_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option :value="null">-- Pilih Metode --</option>
+                                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id">{{ method.nama_metode }}</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -871,34 +1047,49 @@ const deleteInvoice = (invoiceId, invoiceNumber) => {
                                 </div>
 
                                 <div class="grid grid-cols-3 gap-4 pt-4 border-t">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang</label>
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Barang</label>
                                         <select v-model="selectedBarangEdit" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                            <option value="">-- Pilih Barang --</option>
-                                            <option 
-                                                v-for="barang in barangList" 
-                                                :key="barang.id" 
-                                                :value="barang.id"
-                                            >
-                                                {{ barang.nama_barang }} - Rp {{ Number(barang.harga_jual).toLocaleString('id-ID') }}
+                                            <option :value="null">-- Pilih Barang --</option>
+                                            <option v-for="barang in barangList" :key="barang.id" :value="barang.id">
+                                                {{ barang.nama_barang }} ({{ barang.id_barang }}) - Stok: {{ getAvailableStockEdit(barang.id) }}
                                             </option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
-                                        <input v-model.number="selectedQtyEdit" type="number" min="1" placeholder="1" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                        <input 
+                                            v-model.number="selectedQtyEdit" 
+                                            type="number" 
+                                            min="1" 
+                                            :max="selectedBarangEditInfo ? getAvailableStockEdit(selectedBarangEditInfo.id) : 999999"
+                                            placeholder="1" 
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                        />
                                     </div>
-                                    <div class="flex items-end">
-                                        <button 
-                                            type="button" 
-                                            @click="addBarangEdit" 
-                                            :disabled="barangList.length === 0"
-                                            class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <PlusIcon :size="16" />
-                                            Tambah
-                                        </button>
+                                </div>
+
+                                <div class="flex items-center justify-between mt-4">
+                                    <div v-if="selectedBarangEditInfo" class="flex-1 p-3 bg-blue-50 border border-blue-200 rounded-lg mr-4">
+                                        <div class="text-sm">
+                                            <div class="font-semibold text-gray-900">{{ selectedBarangEditInfo.nama_barang }}</div>
+                                            <div class="text-gray-600 mt-1">ID: {{ selectedBarangEditInfo.id_barang }}</div>
+                                            <div class="text-gray-600">Harga: Rp {{ Number(selectedBarangEditInfo.harga_jual).toLocaleString('id-ID') }}</div>
+                                            <div class="flex items-center gap-1 mt-1" :class="getAvailableStockEdit(selectedBarangEditInfo.id) < 10 ? 'text-red-600' : 'text-green-600'">
+                                                <AlertTriangle v-if="getAvailableStockEdit(selectedBarangEditInfo.id) < 10" :size="14" />
+                                                Stok Tersedia: {{ getAvailableStockEdit(selectedBarangEditInfo.id) }}
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button 
+                                        type="button" 
+                                        @click="addBarangEdit" 
+                                        :disabled="barangList.length === 0 || !selectedBarangEdit"
+                                        class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition font-medium flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <PlusIcon :size="16" />
+                                        Tambah
+                                    </button>
                                 </div>
                             </div>
                         </div>
