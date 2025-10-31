@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useForm } from '@inertiajs/vue3';
+import { RotateCcwIcon } from 'lucide-vue-next';
 import { PlusIcon, MinusIcon, Edit2Icon, Trash2Icon, XIcon, PrinterIcon, Check, ChevronsUpDown, AlertTriangle } from 'lucide-vue-next';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import {
@@ -616,6 +617,74 @@ const handleComboboxFocusEdit = () => {
         comboboxButtonRefEdit.value.click();
     }
 };
+
+const showReturnModal = ref(false);
+const returningInvoice = ref(null);
+
+const returnForm = useForm({
+    invoice_id: null,
+    barang_id: null,
+    jumlah: 1,
+    alasan: '',
+});
+
+const getMaxReturnForBarang = (barangId) => {
+    if (!returningInvoice.value) return 0;
+    
+    const detail = returningInvoice.value.details.find(d => d.barang_id === barangId);
+    if (!detail) return 0;
+    
+    const totalReturned = returningInvoice.value.returns?.filter(r => r.barang_id === barangId)
+        .reduce((sum, r) => sum + r.jumlah, 0) || 0;
+    
+    return detail.qty - totalReturned;
+};
+
+const maxReturnQty = computed(() => {
+    if (!returnForm.barang_id || !returningInvoice.value) return 0;
+    return getMaxReturnForBarang(returnForm.barang_id);
+});
+
+const openReturnModal = (invoice) => {
+    returningInvoice.value = invoice;
+    returnForm.invoice_id = invoice.id;
+    returnForm.barang_id = null;
+    returnForm.jumlah = 1;
+    returnForm.alasan = '';
+    showReturnModal.value = true;
+};
+
+const closeReturnModal = () => {
+    showReturnModal.value = false;
+    returnForm.reset();
+    returningInvoice.value = null;
+};
+
+const submitReturn = () => {
+    if (!returnForm.barang_id) {
+        alert('Pilih barang yang akan di-return');
+        return;
+    }
+
+    if (returnForm.jumlah < 1 || returnForm.jumlah > maxReturnQty.value) {
+        alert(`Jumlah return tidak valid. Maksimal: ${maxReturnQty.value}`);
+        return;
+    }
+
+    returnForm.post(route('return-barang.store'), {
+        onSuccess: () => {
+            closeReturnModal();
+            // Reload data invoice untuk menampilkan perubahan
+            router.reload({ only: ['invoices'] });
+        },
+        onError: (errors) => {
+            const errorMessage = Object.values(errors).flat().join('\n');
+            alert(errorMessage);
+        },
+        preserveState: false,
+        preserveScroll: false,
+    });
+};
 </script>
 
 <template>
@@ -706,6 +775,13 @@ const handleComboboxFocusEdit = () => {
                             <td class="px-6 py-3 text-center">
                                 <div class="flex justify-center gap-2">
                                     <div class="relative">
+                                        <button 
+                                            @click="openReturnModal(invoice)" 
+                                            class="p-2 text-purple-500 hover:bg-purple-50 rounded-lg transition" 
+                                            title="Return Barang"
+                                        >
+                                            <RotateCcwIcon :size="18" />
+                                        </button>
                                         <button @click="togglePrintMenu(invoice.id)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
                                             <PrinterIcon :size="18" />
                                         </button>
@@ -717,9 +793,9 @@ const handleComboboxFocusEdit = () => {
                                     <button @click="openEditModal(invoice)" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
                                         <Edit2Icon :size="18" />
                                     </button>
-                                    <button @click="deleteInvoice(invoice.id, invoice.nomor_invoice)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                                    <!-- <button @click="deleteInvoice(invoice.id, invoice.nomor_invoice)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
                                         <Trash2Icon :size="18" />
-                                    </button>
+                                    </button> -->
                                 </div>
                             </td>
                         </tr>
@@ -727,6 +803,7 @@ const handleComboboxFocusEdit = () => {
                 </table>
             </div>
 
+            
             <div v-if="invoices.last_page > 1" class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t">
                 <div class="text-sm text-gray-600">
                     Menampilkan {{ invoices.from }} sampai {{ invoices.to }} dari {{ invoices.total }} data
@@ -764,7 +841,7 @@ const handleComboboxFocusEdit = () => {
                             <div class="grid grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Nama Customer:</label>
-                                    <input v-model="createForm.nama_client" type="text" placeholder="Masukan Nama Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <input v-model="createForm.nama_client" type="text" placeholder="Masukan Nama Customer..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-900 mb-2">Tanggal:</label>
@@ -787,8 +864,8 @@ const handleComboboxFocusEdit = () => {
                             </div>
 
                             <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-900 mb-2">Alamat Client:</label>
-                                <input v-model="createForm.alamat_client" type="text" placeholder="Masukan Alamat Client..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Alamat:</label>
+                                <input v-model="createForm.alamat_client" type="text" placeholder="Masukan Alamat Customer..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                             </div>
 
                             <div class="grid grid-cols-3 gap-6">
@@ -941,7 +1018,83 @@ const handleComboboxFocusEdit = () => {
                 </div>
             </div>
         </div>
+        <!-- RETURN MODAL -->
+        <div v-if="showReturnModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeReturnModal">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeReturnModal"></div>
 
+                <div class="inline-block w-full max-w-2xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-lg shadow-xl">
+                    <div class="flex items-center justify-between px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">Return Barang - Invoice {{ returningInvoice?.nomor_invoice }}</h3>
+                        <button @click="closeReturnModal" class="text-gray-400 hover:text-gray-600">
+                            <XIcon :size="24" />
+                        </button>
+                    </div>
+
+                    <div class="px-6 py-4">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Barang yang akan di-return</label>
+                            <select 
+                                v-model="returnForm.barang_id" 
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                @change="returnForm.jumlah = 1"
+                            >
+                                <option :value="null">-- Pilih Barang --</option>
+                                <option 
+                                    v-for="detail in returningInvoice?.details" 
+                                    :key="detail.barang_id" 
+                                    :value="detail.barang_id"
+                                    :disabled="getMaxReturnForBarang(detail.barang_id) <= 0"
+                                >
+                                    {{ detail.barang?.nama_barang }} - Tersedia untuk return: {{ getMaxReturnForBarang(detail.barang_id) }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4" v-if="returnForm.barang_id">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Jumlah Return (Max: {{ maxReturnQty }})
+                            </label>
+                            <input 
+                                v-model.number="returnForm.jumlah" 
+                                type="number" 
+                                min="1" 
+                                :max="maxReturnQty"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Alasan Return (Opsional)</label>
+                            <textarea 
+                                v-model="returnForm.alasan" 
+                                rows="3"
+                                placeholder="Masukkan alasan return..."
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 px-6 py-4 border-t bg-gray-50">
+                        <button 
+                            type="button" 
+                            @click="submitReturn"
+                            :disabled="!returnForm.barang_id || returnForm.jumlah < 1 || returnForm.jumlah > maxReturnQty"
+                            class="px-8 py-2.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Proses Return
+                        </button>
+                        <button 
+                            type="button" 
+                            @click="closeReturnModal" 
+                            class="px-8 py-2.5 bg-gray-400 text-white rounded-full hover:bg-gray-500 transition font-medium"
+                        >
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- EDIT MODAL -->
         <div v-if="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" @click.self="closeEditModal">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">

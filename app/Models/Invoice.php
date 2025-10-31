@@ -41,4 +41,8 @@ class Invoice extends Model
     {
         return $this->belongsTo(PaymentMethod::class);
     }
+    public function returns()
+{
+    return $this->hasMany(ReturnBarang::class);
+}
 }

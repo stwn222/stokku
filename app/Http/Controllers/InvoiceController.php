@@ -17,7 +17,7 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Invoice::with(['user', 'details.barang', 'paymentMethod'])->latest();
+        $query = Invoice::with(['user', 'details.barang', 'paymentMethod', 'returns'])->latest();
         
         if ($request->filled('tipe_invoice')) {
             $query->where('tipe_invoice', $request->tipe_invoice);

@@ -5,20 +5,16 @@ import { DownloadIcon, PrinterIcon } from 'lucide-vue-next';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const page = usePage();
-const barangs = computed(() => page.props.barangs);
+const returns = computed(() => page.props.returns);
 const filters = computed(() => page.props.filters);
 
-const tanggalAwal = ref(filters.value.tanggal_awal);
-const tanggalAkhir = ref(filters.value.tanggal_akhir);
-const filterStok = ref(filters.value.filter_stok);
-const perPage = ref(filters.value.per_page);
+const startDate = ref(filters.value.start_date);
+const endDate = ref(filters.value.end_date);
 
 const handleFilter = () => {
-    router.get(route('laporan-stok.index'), {
-        tanggal_awal: tanggalAwal.value,
-        tanggal_akhir: tanggalAkhir.value,
-        filter_stok: filterStok.value,
-        per_page: perPage.value,
+    router.get(route('laporan-return.index'), {
+        start_date: startDate.value,
+        end_date: endDate.value,
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -27,17 +23,16 @@ const handleFilter = () => {
 
 const handlePrint = () => {
     const params = new URLSearchParams({
-        tanggal_awal: tanggalAwal.value,
-        tanggal_akhir: tanggalAkhir.value,
-        filter_stok: filterStok.value,
+        start_date: startDate.value,
+        end_date: endDate.value,
     });
-    window.open(route('laporan-stok.print') + '?' + params.toString(), '_blank');
+    window.open(route('laporan-return.print') + '?' + params.toString(), '_blank');
 };
 
 const exportExcel = async () => {
     try {
-        const response = await fetch(route('laporan-stok.export-excel') + 
-            `?tanggal_awal=${tanggalAwal.value}&tanggal_akhir=${tanggalAkhir.value}&filter_stok=${filterStok.value}`, {
+        const response = await fetch(route('laporan-return.export-excel') + 
+            `?start_date=${startDate.value}&end_date=${endDate.value}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -51,34 +46,32 @@ const exportExcel = async () => {
         const result = await response.json();
         
         const csvContent = [
-    ['Kode Barang', 'Nama Barang', 'Jenis Barang', 'Stok Awal', 'Pembelian', 'Penjualan', 'Return', 'Stok Akhir', 'Satuan'].join(','),
-    ...result.data.map(row => [
-        row['Kode Barang'],
-        `"${row['Nama Barang']}"`,
-        `"${row['Jenis Barang']}"`,
-        row['Stok Awal'],
-        row['Pembelian'],
-        row['Penjualan'],
-        row['Return'] || 0,
-        row['Stok Akhir'],
-        row['Satuan']
-    ].join(','))
-].join('\n');
+            ['Tanggal Return', 'No. Invoice', 'Kode Barang', 'Nama Barang', 'Jenis Barang', 'Jumlah', 'Alasan', 'User'].join(','),
+            ...result.data.map(row => [
+                row['Tanggal Return'],
+                row['No. Invoice'],
+                row['Kode Barang'],
+                `"${row['Nama Barang']}"`,
+                `"${row['Jenis Barang']}"`,
+                row['Jumlah'],
+                `"${row['Alasan']}"`,
+                `"${row['User']}"`
+            ].join(','))
+        ].join('\n');
         
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `laporan_stok_${tanggalAwal.value}_${tanggalAkhir.value}.csv`;
+        link.download = `laporan_return_${startDate.value}_${endDate.value}.csv`;
         link.click();
     } catch (error) {
         alert('Gagal export data: ' + error.message);
     }
 };
 
-const formatNumber = (num) => {
-    return new Intl.NumberFormat('id-ID').format(num || 0);
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('id-ID');
 };
-
 </script>
 
 <template>
@@ -91,23 +84,23 @@ const formatNumber = (num) => {
                         <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-white">Laporan Stok Barang</h1>
+                <h1 class="text-2xl font-bold text-white">Laporan Return Barang</h1>
             </div>
         </template>
 
         <div class="flex items-center gap-2 text-white mb-6">
             <span class="hover:text-blue-100 cursor-pointer" @click="() => $inertia.visit(route('dashboard'))">Home</span>
             <span>></span>
-            <span>Laporan Stok</span>
+            <span>Laporan Return</span>
         </div>
 
         <div class="bg-white rounded-lg p-6 mb-6">
             <h2 class="text-lg font-semibold mb-4">Filter Data</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Awal</label>
                     <input
-                        v-model="tanggalAwal"
+                        v-model="startDate"
                         type="date"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -115,32 +108,10 @@ const formatNumber = (num) => {
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
                     <input
-                        v-model="tanggalAkhir"
+                        v-model="endDate"
                         type="date"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter Stok</label>
-                    <select
-                        v-model="filterStok"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="all">Semua Stok</option>
-                        <option value="minimum">Stok Minimum</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Per Halaman</label>
-                    <select
-                        v-model="perPage"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
                 </div>
                 <div class="flex items-end gap-2">
                     <button
@@ -173,53 +144,57 @@ const formatNumber = (num) => {
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">No</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Tanggal Return</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">No. Invoice</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Kode Barang</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Nama Barang</th>
-                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Jenis</th>
-                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700 border-b">Stok Awal</th>
-                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700 border-b">Pembelian</th>
-                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700 border-b">Penjualan</th>
-                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700 border-b">Return</th>
-                            <th class="px-6 py-3 text-right text-sm font-semibold text-gray-700 border-b">Stok Akhir</th>
+                            <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700 border-b">Jumlah</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Alasan</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">User</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="!barangs.data || barangs.data.length === 0">
-                            <td colspan="9" class="px-6 py-4 text-center text-gray-500">Tidak ada data</td>
+                        <tr v-if="!returns.data || returns.data.length === 0">
+                            <td colspan="8" class="px-6 py-4 text-center text-gray-500">Tidak ada data return</td>
                         </tr>
-                        <tr v-for="(barang, index) in barangs.data" :key="barang.id" class="border-b hover:bg-gray-50">
+                        <tr v-for="(returnItem, index) in returns.data" :key="returnItem.id" class="border-b hover:bg-gray-50">
                             <td class="px-6 py-3 text-sm text-gray-900">
-                                {{ (barangs.current_page - 1) * barangs.per_page + index + 1 }}
+                                {{ (returns.current_page - 1) * returns.per_page + index + 1 }}
                             </td>
-                            <td class="px-6 py-3 text-sm text-gray-900">{{ barang.id_barang }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-900">{{ barang.nama_barang }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-900">{{ barang.jenis_barang?.nama_jenis }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-900 text-right">{{ formatNumber(barang.stok_awal) }}</td>
-                            <td class="px-6 py-3 text-sm text-green-600 text-right font-medium">
-                                {{ formatNumber(barang.jumlah_pembelian) }}
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ formatDate(returnItem.tanggal_return) }}
                             </td>
-                            <td class="px-6 py-3 text-sm text-red-600 text-right font-medium">
-                                {{ formatNumber(barang.jumlah_penjualan) }}
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ returnItem.invoice?.nomor_invoice || '-' }}
                             </td>
-                            <td class="px-6 py-3 text-sm text-orange-600 text-right font-medium">
-                                {{ formatNumber(barang.jumlah_return) }}
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ returnItem.barang?.id_barang || '-' }}
                             </td>
-                            <td class="px-6 py-3 text-sm text-gray-900 text-right font-semibold">
-                                {{ formatNumber(barang.stok_akhir) }}
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ returnItem.barang?.nama_barang || '-' }}
+                            </td>
+                            <td class="px-6 py-3 text-center text-sm text-orange-600 font-semibold">
+                                {{ returnItem.jumlah }}
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ returnItem.alasan || '-' }}
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ returnItem.user?.name || '-' }}
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div v-if="barangs.last_page > 1" class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t">
+            <div v-if="returns.last_page > 1" class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t">
                 <div class="text-sm text-gray-600">
-                    Menampilkan {{ barangs.from }} sampai {{ barangs.to }} dari {{ barangs.total }} data
+                    Menampilkan {{ returns.from }} sampai {{ returns.to }} dari {{ returns.total }} data
                 </div>
                 <div class="flex gap-2">
                     <component
                         :is="link.url ? 'a' : 'span'"
-                        v-for="link in barangs.links"
+                        v-for="link in returns.links"
                         :key="link.label"
                         :href="link.url"
                         @click.prevent="link.url && router.visit(link.url)"

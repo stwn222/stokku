@@ -8,13 +8,13 @@ use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanStokController; // PERBAIKAN: Tambahkan namespace lengkap
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\JenisBarangController;
-use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\ReturnBarangController;
-use App\Http\Controllers\LaporanReturnController;
 use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\LaporanReturnController; // TAMBAHAN: Controller untuk laporan return
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\LaporanBarangMasukController;
 use App\Http\Controllers\LaporanBarangKeluarController;
@@ -68,9 +68,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/barang-keluar/{barangKeluar}', [BarangKeluarController::class, 'update'])->name('barang-keluar.update');
     Route::delete('/barang-keluar/{barangKeluar}', [BarangKeluarController::class, 'destroy'])->name('barang-keluar.destroy');
 
-    // Laporan Stok Routes
-    Route::get('/laporan-stok/export-excel', [LaporanStokController::class, 'exportExcel'])->name('laporan-stok.export-excel');
+    // Laporan Stok
     Route::get('/laporan-stok', [LaporanStokController::class, 'index'])->name('laporan-stok.index');
+    Route::get('/laporan-stok/print', [LaporanStokController::class, 'print'])->name('laporan-stok.print');
+    Route::get('/laporan-stok/export-excel', [LaporanStokController::class, 'exportExcel'])->name('laporan-stok.export-excel');
 
     // Laporan Barang Masuk Routes
     Route::get('/laporan-barang-masuk', [LaporanBarangMasukController::class, 'index'])->name('laporan-barang-masuk.index');
@@ -78,9 +79,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Laporan Barang Keluar Routes
     Route::get('/laporan-barang-keluar', [LaporanBarangKeluarController::class, 'index'])->name('laporan-barang-keluar.index');
 
-    // Laporan Return Routes
     Route::get('/laporan-return', [LaporanReturnController::class, 'index'])->name('laporan-return.index');
-
+    
     // Invoice Routes
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice.index');
     Route::get('/invoice/create', [InvoiceController::class, 'create'])->name('invoice.create');
