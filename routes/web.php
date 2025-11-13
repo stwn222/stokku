@@ -8,24 +8,20 @@ use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LaporanStokController; // PERBAIKAN: Tambahkan namespace lengkap
+use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\JenisBarangController;
 use App\Http\Controllers\BarangKeluarController;
 use App\Http\Controllers\ReturnBarangController;
 use App\Http\Controllers\PaymentMethodController;
-use App\Http\Controllers\LaporanReturnController; // TAMBAHAN: Controller untuk laporan return
+use App\Http\Controllers\LaporanReturnController; 
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\LaporanBarangMasukController;
 use App\Http\Controllers\LaporanBarangKeluarController;
 
+// Redirect root URL to login page
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

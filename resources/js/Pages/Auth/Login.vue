@@ -140,12 +140,6 @@ const submit = () => {
                     </button>
                 </form>
 
-                <p class="text-center text-sm text-gray-600 mt-8">
-                    Tidak Punya Akun? 
-                    <Link :href="route('register')" class="text-blue-600 hover:underline font-semibold">
-                        Daftar Disini
-                    </Link>
-                </p>
             </div>
 
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-12 flex flex-col items-center justify-center gap-8">
