@@ -17,13 +17,19 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
+        $perPage = $request->get('per_page', 10);
+        
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+        
         $query = Invoice::with(['user', 'details.barang', 'paymentMethod', 'returns'])->latest();
         
         if ($request->filled('tipe_invoice')) {
             $query->where('tipe_invoice', $request->tipe_invoice);
         }
         
-        $invoices = $query->paginate(10);
+        $invoices = $query->paginate($perPage)->withQueryString();
         
         $barangList = Barang::select('id', 'id_barang', 'nama_barang', 'harga_jual', 'stok')
             ->where('stok', '>', 0)
@@ -36,7 +42,10 @@ class InvoiceController extends Controller
         
         return Inertia::render('Invoice/Index', [
             'invoices' => $invoices,
-            'filters' => $request->only(['tipe_invoice']),
+            'filters' => [
+                'tipe_invoice' => $request->tipe_invoice,
+                'per_page' => $perPage,
+            ],
             'barangList' => $barangList,
             'paymentMethods' => $paymentMethods,
             'nextMJUNumber' => $this->getNextInvoiceNumber('MJU'),
@@ -283,19 +292,35 @@ class InvoiceController extends Controller
 
     public function printSingle($id)
     {
-        $invoice = Invoice::with(['user', 'details.barang', 'paymentMethod'])->findOrFail($id);
+        // PENTING: Eager load payment_method dengan nama yang benar
+        $invoice = Invoice::with([
+            'user', 
+            'details.barang', 
+            'paymentMethod'  // Pastikan nama relasi sesuai dengan yang di Model
+        ])->findOrFail($id);
+        
+        // Convert ke array untuk memastikan relasi ter-load
+        $invoiceData = $invoice->toArray();
         
         return Inertia::render('Invoice/PrintSingle', [
-            'invoice' => $invoice,
+            'invoice' => $invoiceData,
         ]);
     }
 
     public function printSingleA5($id)
     {
-        $invoice = Invoice::with(['user', 'details.barang', 'paymentMethod'])->findOrFail($id);
+        // PENTING: Eager load payment_method dengan nama yang benar
+        $invoice = Invoice::with([
+            'user', 
+            'details.barang', 
+            'paymentMethod'  // Pastikan nama relasi sesuai dengan yang di Model
+        ])->findOrFail($id);
+        
+        // Convert ke array untuk memastikan relasi ter-load
+        $invoiceData = $invoice->toArray();
         
         return Inertia::render('Invoice/PrintSingleA5', [
-            'invoice' => $invoice,
+            'invoice' => $invoiceData,
         ]);
     }
 

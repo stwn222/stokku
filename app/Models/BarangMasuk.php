@@ -39,7 +39,6 @@ class BarangMasuk extends Model
         return $this->belongsTo(Barang::class, 'barang_id');
     }
 
-    // Generate kode transaksi otomatis
     public static function generateKodeTransaksi()
     {
         $lastTransaction = self::latest('id')->first();
@@ -48,14 +47,12 @@ class BarangMasuk extends Model
             return 'TM0001';
         }
 
-        // Extract nomor dari kode terakhir
         $lastNumber = (int) substr($lastTransaction->kode_transaksi, 5);
         $nextNumber = $lastNumber + 1;
 
         return 'TM' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
-    // Hitung PPN (11%)
     public function calculatePPN()
     {
         if ($this->is_ppn) {
@@ -64,14 +61,12 @@ class BarangMasuk extends Model
         return 0;
     }
 
-    // Hitung total
     public function calculateTotal()
     {
         $subtotal = $this->harga_beli * $this->jumlah;
         return $subtotal + $this->ppn;
     }
 
-    // Relasi ke User - TAMBAHKAN INI
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

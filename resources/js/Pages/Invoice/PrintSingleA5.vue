@@ -58,6 +58,21 @@ const companyName = computed(() => {
         : 'CV. Media Jaya Utama';
 });
 
+const paymentMethodInfo = computed(() => {
+    if (!props.invoice.payment_method) {
+        return {
+            account: '-',
+            name: '-',
+            bank: '-'
+        };
+    }
+    
+    return {
+        account: props.invoice.payment_method.nomor_rekening || '-',
+        name: props.invoice.payment_method.atas_nama || '-',
+        bank: props.invoice.payment_method.nama_metode || '-'
+    };
+});
 
 onMounted(() => {
     setTimeout(() => {
@@ -111,15 +126,15 @@ onMounted(() => {
                     <div class="section-content">
                         <div class="payment-line">
                             <span class="pay-label">Account</span>
-                            <span class="pay-value"><strong>: 008 0101 003732</strong></span>
+                            <span class="pay-value"><strong>: {{ paymentMethodInfo.account }}</strong></span>
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">A/c Name</span>
-                            <span class="pay-value">: CV. Media Jaya Utama</span>
+                            <span class="pay-value">: {{ paymentMethodInfo.name }}</span>
                         </div>
                         <div class="payment-line">
                             <span class="pay-label">Bank Details</span>
-                            <span class="pay-value">: Bank BJB Syariah</span>
+                            <span class="pay-value">: {{ paymentMethodInfo.bank }}</span>
                         </div>
                     </div>
                 </div>

@@ -685,6 +685,23 @@ const submitReturn = () => {
         preserveScroll: false,
     });
 };
+
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    const dayName = days[date.getDay()];
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${dayName}, ${day} ${month} ${year}`;
+};
 </script>
 
 <template>
@@ -706,28 +723,42 @@ const submitReturn = () => {
             <span>Invoice</span>
         </div>
 
-        <div class="bg-white rounded-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold mb-4">Filter Data Invoice</h2>
-            <div class="flex items-end gap-4">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Invoice</label>
-                    <select
-                        v-model="selectedFilter"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <div class="bg-white rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold mb-4">Filter Data Invoice</h2>
+                <div class="flex items-end gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Invoice</label>
+                        <select
+                            v-model="selectedFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">-- Semua Tipe --</option>
+                            <option value="MJU">MJU</option>
+                            <option value="BIP">BIP</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tampilkan per halaman</label>
+                        <select
+                            v-model.number="perPage"
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option :value="10">10</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
+                        </select>
+                    </div>
+                    
+                    <button
+                        @click="handleFilter"
+                        class="px-8 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium"
                     >
-                        <option value="">-- Semua Tipe --</option>
-                        <option value="MJU">MJU</option>
-                        <option value="BIP">BIP</option>
-                    </select>
+                        Tampilkan
+                    </button>
                 </div>
-                <button
-                    @click="handleFilter"
-                    class="px-8 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition font-medium"
-                >
-                    Tampilkan
-                </button>
             </div>
-        </div>
 
         <div class="flex justify-end mb-4">
             <button
@@ -749,18 +780,23 @@ const submitReturn = () => {
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Nomor Invoice</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Tanggal</th>
                             <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Tipe</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 border-b">Metode Pembayaran</th>
                             <th class="px-6 py-3 text-center text-sm font-semibold text-gray-700 border-b">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="invoices.data && invoices.data.length === 0">
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada data invoice</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada data invoice</td>
                         </tr>
                         <tr v-for="(invoice, index) in invoices.data" :key="invoice.id" class="border-b hover:bg-gray-50">
-                            <td class="px-6 py-3 text-sm text-gray-900">{{ (invoices.current_page - 1) * invoices.per_page + index + 1 }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ (invoices.current_page - 1) * invoices.per_page + index + 1 }}
+                            </td>
                             <td class="px-6 py-3 text-sm text-gray-900">{{ invoice.nama_client }}</td>
                             <td class="px-6 py-3 text-sm text-gray-900">{{ invoice.nomor_invoice }}</td>
-                            <td class="px-6 py-3 text-sm text-gray-900">{{ new Date(invoice.tanggal).toLocaleDateString('id-ID') }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ formatDate(invoice.tanggal) }}
+                            </td>
                             <td class="px-6 py-3 text-sm">
                                 <span
                                     :class="{
@@ -771,6 +807,9 @@ const submitReturn = () => {
                                 >
                                     {{ invoice.tipe_invoice }}
                                 </span>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-900">
+                                {{ invoice.payment_method?.nama_metode || '-' }}
                             </td>
                             <td class="px-6 py-3 text-center">
                                 <div class="flex justify-center gap-2">
@@ -793,9 +832,6 @@ const submitReturn = () => {
                                     <button @click="openEditModal(invoice)" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
                                         <Edit2Icon :size="18" />
                                     </button>
-                                    <!-- <button @click="deleteInvoice(invoice.id, invoice.nomor_invoice)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
-                                        <Trash2Icon :size="18" />
-                                    </button> -->
                                 </div>
                             </td>
                         </tr>
@@ -803,7 +839,7 @@ const submitReturn = () => {
                 </table>
             </div>
 
-            
+            <!-- Pagination (sudah ada di kode asli, tidak perlu diubah) -->
             <div v-if="invoices.last_page > 1" class="px-6 py-4 bg-gray-50 flex justify-between items-center border-t">
                 <div class="text-sm text-gray-600">
                     Menampilkan {{ invoices.from }} sampai {{ invoices.to }} dari {{ invoices.total }} data

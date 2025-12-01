@@ -27,6 +27,13 @@ class Invoice extends Model
         'diskon' => 'decimal:2',
     ];
 
+    // CRITICAL: Pastikan relasi ini ada dan nama method-nya PERSIS 'paymentMethod'
+    // Nama method harus camelCase dan sama dengan yang dipanggil di controller
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -37,12 +44,24 @@ class Invoice extends Model
         return $this->hasMany(InvoiceDetail::class);
     }
 
-    public function paymentMethod()
-    {
-        return $this->belongsTo(PaymentMethod::class);
-    }
     public function returns()
-{
-    return $this->hasMany(ReturnBarang::class);
-}
+    {
+        return $this->hasMany(ReturnBarang::class);
+    }
+    
+    // Optional: Accessor untuk mendapatkan payment method info dengan mudah
+    public function getPaymentMethodNameAttribute()
+    {
+        return $this->paymentMethod?->nama_metode ?? '-';
+    }
+    
+    public function getPaymentMethodAccountAttribute()
+    {
+        return $this->paymentMethod?->nomor_rekening ?? '-';
+    }
+    
+    public function getPaymentMethodOwnerAttribute()
+    {
+        return $this->paymentMethod?->atas_nama ?? '-';
+    }
 }
