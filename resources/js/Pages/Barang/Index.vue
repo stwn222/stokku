@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Home, ChevronRight, Pencil, Trash2, Plus, Check, ChevronsUpDown } from 'lucide-vue-next';
+import { Home, ChevronRight, Pencil, Trash2, Plus, Check, ChevronsUpDown, ChevronLeft } from 'lucide-vue-next';
 import {
   Combobox,
   ComboboxButton,
@@ -174,6 +174,18 @@ const getSatuanNama = (barang) => {
 const isLowStock = (barang) => {
     return barang.stok < (barang.stok_minimum || 10);
 };
+
+const changePage = (url) => {
+    if (url) {
+        router.get(url, {
+            per_page: perPage.value,
+            search: search.value,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }
+};
 </script>
 
 <template>
@@ -307,6 +319,64 @@ const isLowStock = (barang) => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Section -->
+            <div class="p-6 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Menampilkan {{ barangs.from }} sampai {{ barangs.to }} dari {{ barangs.total }} data
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- Previous Button -->
+                        <button
+                            @click="changePage(barangs.prev_page_url)"
+                            :disabled="!barangs.prev_page_url"
+                            :class="[
+                                'px-3 py-2 rounded transition flex items-center gap-1',
+                                barangs.prev_page_url
+                                    ? 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'
+                                    : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
+                            ]"
+                        >
+                            <ChevronLeft :size="16" />
+                        </button>
+
+                        <!-- Page Numbers -->
+                        <template v-for="(link, index) in barangs.links" :key="index">
+                            <button
+                                v-if="link.label !== '&laquo; Previous' && link.label !== 'Next &raquo;'"
+                                @click="changePage(link.url)"
+                                :disabled="!link.url"
+                                :class="[
+                                    'px-4 py-2 rounded transition min-w-[40px]',
+                                    link.active
+                                        ? 'bg-blue-500 text-white font-semibold'
+                                        : link.url
+                                            ? 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'
+                                            : 'bg-white border border-gray-300 text-gray-400 cursor-not-allowed'
+                                ]"
+                                v-html="link.label"
+                            >
+                            </button>
+                        </template>
+
+                        <!-- Next Button -->
+                        <button
+                            @click="changePage(barangs.next_page_url)"
+                            :disabled="!barangs.next_page_url"
+                            :class="[
+                                'px-3 py-2 rounded transition flex items-center gap-1',
+                                barangs.next_page_url
+                                    ? 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'
+                                    : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
+                            ]"
+                        >
+                            <ChevronRight :size="16" />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
