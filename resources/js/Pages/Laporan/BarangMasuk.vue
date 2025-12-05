@@ -185,154 +185,158 @@ const cetakLaporan = () => {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center gap-2 text-white">
-                <Home :size="20" />
-                <ChevronRight :size="16" />
-                <span>Laporan</span>
-                <ChevronRight :size="16" />
-                <span class="font-semibold">Barang Masuk</span>
+                <Home :size="20" class="hidden sm:block" />
+                <Home :size="16" class="sm:hidden" />
+                <ChevronRight :size="16" class="hidden sm:block" />
+                <ChevronRight :size="14" class="sm:hidden" />
+                <span class="text-xs sm:text-sm md:text-base">Laporan</span>
+                <ChevronRight :size="16" class="hidden sm:block" />
+                <ChevronRight :size="14" class="sm:hidden" />
+                <span class="font-semibold text-xs sm:text-sm md:text-base">Barang Masuk</span>
             </div>
         </template>
 
         <div class="bg-white rounded-lg shadow-md">
-            <!-- Header Card -->
-            <div class="border-b border-gray-200 p-6">
-                <h2 class="text-xl font-bold text-gray-800">Laporan Barang Masuk</h2>
+            <div class="border-b border-gray-200 p-3 sm:p-4 md:p-6">
+                <h2 class="text-base sm:text-lg md:text-xl font-bold text-gray-800">Laporan Barang Masuk</h2>
             </div>
 
-            <!-- Filter Section -->
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Filter Data Barang Masuk</h3>
+            <div class="p-3 sm:p-4 md:p-6 border-b border-gray-200">
+                <h3 class="text-sm sm:text-base md:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Filter Data Barang Masuk</h3>
                 
-                <div class="flex items-end gap-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Awal</label>
-                        <input 
-                            v-model="tanggalAwal"
-                            type="date"
-                            class="w-full border border-gray-300 rounded px-3 py-2"
-                        />
+                <div class="flex flex-col gap-3 sm:gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Tanggal Awal</label>
+                            <input 
+                                v-model="tanggalAwal"
+                                type="date"
+                                class="w-full border border-gray-300 rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Tanggal Akhir</label>
+                            <input 
+                                v-model="tanggalAkhir"
+                                type="date"
+                                class="w-full border border-gray-300 rounded px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm"
+                            />
+                        </div>
                     </div>
 
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
-                        <input 
-                            v-model="tanggalAkhir"
-                            type="date"
-                            class="w-full border border-gray-300 rounded px-3 py-2"
-                        />
+                    <div class="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+                        <button 
+                            @click="tampilkanData"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded transition text-xs sm:text-sm md:text-base"
+                        >
+                            Tampilkan
+                        </button>
+                        
+                        <button 
+                            @click="cetakLaporan"
+                            class="bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded transition flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-base"
+                        >
+                            <Printer :size="14" class="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px]" />
+                            <span>Cetak</span>
+                        </button>
                     </div>
-
-                    <button 
-                        @click="tampilkanData"
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded transition"
-                    >
-                        Tampilkan
-                    </button>
-                    
-                    <button 
-                        @click="cetakLaporan"
-                        class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded transition flex items-center gap-2"
-                    >
-                        <Printer :size="18" />
-                        Cetak
-                    </button>
                 </div>
             </div>
 
-            <!-- Report Section -->
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Laporan Barang Masuk</h3>
+            <div class="p-3 sm:p-4 md:p-6">
+                <h3 class="text-sm sm:text-base md:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Laporan Barang Masuk</h3>
 
-                <!-- Data Controls -->
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Tampilkan</label>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-3">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Tampilkan</label>
                         <select 
                             v-model="perPage"
-                            class="border border-gray-300 rounded px-2 py-1 text-sm"
+                            class="border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm"
                         >
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <span class="text-sm text-gray-700">data</span>
+                        <span class="text-xs sm:text-sm text-gray-700">data</span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Cari:</label>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Cari:</label>
                         <input 
                             v-model="search"
                             type="text"
-                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
+                            class="border border-gray-300 rounded px-2 sm:px-3 py-1 text-xs sm:text-sm w-full sm:w-48 md:w-64"
                             placeholder="Cari data..."
                         />
                     </div>
                 </div>
 
-                <!-- Table -->
-                <div class="overflow-x-auto">
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">No</th>
-                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Kode Transaksi</th>
-                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal</th>
-                                <th class="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
-                                <th class="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">Jumlah Masuk</th>
-                                <th class="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">Satuan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr 
-                                v-for="(item, index) in barangMasuks.data" 
-                                :key="item.id"
-                                class="hover:bg-gray-50"
-                            >
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ barangMasuks.from + index }}
-                                </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ item.kode_transaksi }}
-                                </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ formatDate(item.tanggal) }}
-                                </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700">
-                                    {{ item.barang.nama_barang }}
-                                </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
-                                    {{ item.jumlah }}
-                                </td>
-                                <td class="border border-gray-300 px-4 py-3 text-sm text-gray-700 text-center">
-                                    {{ item.barang.satuan.nama_satuan }}
-                                </td>
-                            </tr>
-                            <tr v-if="barangMasuks.data.length === 0">
-                                <td colspan="6" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                    <span v-if="!tanggalAwal || !tanggalAkhir">
-                                        Silakan pilih tanggal untuk menampilkan data
-                                    </span>
-                                    <span v-else>
-                                        Tidak ada data pada periode yang dipilih
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="overflow-x-auto -mx-3 sm:mx-0">
+                    <div class="inline-block min-w-full align-middle">
+                        <div class="overflow-hidden">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">No</th>
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">Kode</th>
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 whitespace-nowrap">Tanggal</th>
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700">Nama Barang</th>
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-center text-xs font-semibold text-gray-700 whitespace-nowrap">Jumlah</th>
+                                        <th class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-center text-xs font-semibold text-gray-700 whitespace-nowrap">Satuan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr 
+                                        v-for="(item, index) in barangMasuks.data" 
+                                        :key="item.id"
+                                        class="hover:bg-gray-50"
+                                    >
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700">
+                                            {{ barangMasuks.from + index }}
+                                        </td>
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700 whitespace-nowrap">
+                                            {{ item.kode_transaksi }}
+                                        </td>
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700 whitespace-nowrap">
+                                            {{ formatDate(item.tanggal) }}
+                                        </td>
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700">
+                                            {{ item.barang.nama_barang }}
+                                        </td>
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700 text-center">
+                                            {{ item.jumlah }}
+                                        </td>
+                                        <td class="border border-gray-300 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-xs text-gray-700 text-center">
+                                            {{ item.barang.satuan.nama_satuan }}
+                                        </td>
+                                    </tr>
+                                    <tr v-if="barangMasuks.data.length === 0">
+                                        <td colspan="6" class="border border-gray-300 px-2 sm:px-3 md:px-4 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm">
+                                            <span v-if="!tanggalAwal || !tanggalAkhir">
+                                                Silakan pilih tanggal untuk menampilkan data
+                                            </span>
+                                            <span v-else>
+                                                Tidak ada data pada periode yang dipilih
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Pagination Info -->
-                <div class="mt-4 text-sm text-gray-700">
+                <div class="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-700 text-center sm:text-left px-3 sm:px-0">
                     Menampilkan {{ barangMasuks.from || 0 }} sampai {{ barangMasuks.to || 0 }} dari {{ barangMasuks.total || 0 }} data
                 </div>
 
-                <!-- Pagination Controls -->
-                <div class="flex items-center justify-center gap-2 mt-4">
+                <div class="flex items-center justify-center gap-1 sm:gap-2 mt-3 sm:mt-4 flex-wrap px-3 sm:px-0">
                     <button 
                         @click="router.get(barangMasuks.prev_page_url)"
                         :disabled="!barangMasuks.prev_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2 sm:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     >
                         &lt;
                     </button>
@@ -342,7 +346,7 @@ const cetakLaporan = () => {
                         :key="link.label"
                         @click="link.url ? router.get(link.url) : null"
                         :class="[
-                            'px-3 py-1 border rounded',
+                            'px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm',
                             link.active 
                                 ? 'bg-blue-500 text-white border-blue-500' 
                                 : 'border-gray-300 hover:bg-gray-100'
@@ -354,7 +358,7 @@ const cetakLaporan = () => {
                     <button 
                         @click="router.get(barangMasuks.next_page_url)"
                         :disabled="!barangMasuks.next_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2 sm:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     >
                         &gt;
                     </button>

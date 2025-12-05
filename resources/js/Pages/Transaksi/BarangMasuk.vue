@@ -147,7 +147,7 @@ const formatDate = (date) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-2 text-white">
+            <div class="flex items-center gap-2 text-white text-sm sm:text-base">
                 <Home :size="20" />
                 <ChevronRight :size="16" />
                 <span>Barang Masuk</span>
@@ -157,12 +157,12 @@ const formatDate = (date) => {
         </template>
 
         <div class="bg-white rounded-lg shadow-md">
-            <div class="border-b border-gray-200 p-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-gray-800">Data Barang Masuk</h2>
+            <div class="border-b border-gray-200 p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-800">Data Barang Masuk</h2>
                     <button
                         @click="openCreateModal"
-                        class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
+                        class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition text-sm w-full sm:w-auto justify-center"
                     >
                         <Plus :size="18" />
                         Entri Data
@@ -170,28 +170,28 @@ const formatDate = (date) => {
                 </div>
             </div>
 
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Tampilkan</label>
+            <div class="p-4 sm:p-6 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="text-xs sm:text-sm text-gray-700">Tampilkan</label>
                         <select
                             v-model="perPage"
-                            class="border border-gray-300 rounded px-2 py-1 text-sm"
+                            class="border border-gray-300 rounded px-2 py-1 text-xs sm:text-sm"
                         >
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <span class="text-sm text-gray-700">data</span>
+                        <span class="text-xs sm:text-sm text-gray-700">data</span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Cari:</label>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Cari:</label>
                         <input
                             v-model="search"
                             type="text"
-                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
+                            class="border border-gray-300 rounded px-3 py-1 text-xs sm:text-sm flex-1 sm:w-64"
                             placeholder="Cari transaksi..."
                         />
                     </div>
@@ -199,39 +199,37 @@ const formatDate = (date) => {
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="w-full min-w-[800px]">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
-                            <!-- <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Transaksi</th> -->
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Kode Barang</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Tanggal</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Jumlah</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Harga Beli</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">PPN</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Vendor</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Kode Barang</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Tanggal</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Jumlah</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Harga Beli</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">PPN</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-700 border">Vendor</th>
+                            <th class="px-3 sm:px-4 py-2 sm:py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr
                             v-for="(item, index) in barangMasuks.data"
                             :key="item.id"
-                            class="hover:bg-gray-50"l
+                            class="hover:bg-gray-50"
                         >
-                            <td class="px-4 py-3 text-sm text-gray-700 border">
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">
                                 {{ barangMasuks.from + index }}
                             </td>
-                            <!-- <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.kode_transaksi }}</td> -->
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.id_barang }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.barang.nama_barang }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatDate(item.tanggal) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.jumlah }} {{ item.barang.satuan.nama_satuan }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatCurrency(item.harga_beli) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatCurrency(item.ppn) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ item.vendor }}</td>
-                            <td class="px-4 py-3 text-sm border">
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ item.barang.id_barang }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ item.barang.nama_barang }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ formatDate(item.tanggal) }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ item.jumlah }} {{ item.barang.satuan.nama_satuan }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ formatCurrency(item.harga_beli) }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ formatCurrency(item.ppn) }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 border">{{ item.vendor }}</td>
+                            <td class="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border">
                                 <div class="flex items-center justify-center gap-2">
                                     <button
                                         @click="openEditModal(item)"
@@ -251,7 +249,7 @@ const formatDate = (date) => {
                             </td>
                         </tr>
                         <tr v-if="barangMasuks.data.length === 0">
-                            <td colspan="10" class="px-4 py-8 text-center text-gray-500 border">
+                            <td colspan="9" class="px-3 sm:px-4 py-6 sm:py-8 text-center text-gray-500 border text-sm">
                                 Tidak ada data barang masuk
                             </td>
                         </tr>
@@ -259,16 +257,16 @@ const formatDate = (date) => {
                 </table>
             </div>
 
-            <div class="p-6 flex items-center justify-between border-t border-gray-200">
-                <div class="text-sm text-gray-700">
+            <div class="p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 gap-3">
+                <div class="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                     Menampilkan {{ barangMasuks.from || 0 }} sampai {{ barangMasuks.to || 0 }} dari {{ barangMasuks.total || 0 }} data
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
                     <button
                         @click="router.get(barangMasuks.prev_page_url)"
                         :disabled="!barangMasuks.prev_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2 sm:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     >
                         &lt;
                     </button>
@@ -277,7 +275,7 @@ const formatDate = (date) => {
                         <button
                             @click="link.url ? router.get(link.url) : null"
                             :class="[
-                                'px-3 py-1 border rounded',
+                                'px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm',
                                 link.active
                                     ? 'bg-blue-500 text-white border-blue-500'
                                     : 'border-gray-300 hover:bg-gray-100'
@@ -290,7 +288,7 @@ const formatDate = (date) => {
                     <button
                         @click="router.get(barangMasuks.next_page_url)"
                         :disabled="!barangMasuks.next_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-2 sm:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm"
                     >
                         &gt;
                     </button>
@@ -304,8 +302,8 @@ const formatDate = (date) => {
             @click.self="closeModal"
         >
             <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-800">
+                <div class="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-800">
                         {{ modalMode === 'create' ? 'Entri Barang Masuk' : 'Edit Barang Masuk' }}
                     </h3>
                     <button
@@ -316,35 +314,25 @@ const formatDate = (date) => {
                     </button>
                 </div>
 
-                <form @submit.prevent="submitForm" class="p-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <!-- <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Kode Transaksi :</label>
-                            <input
-                                v-model="form.kode_transaksi"
-                                type="text"
-                                readonly
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50"
-                            />
-                        </div> -->
-
+                <form @submit.prevent="submitForm" class="p-4 sm:p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Kode Barang :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Kode Barang :</label>
                             <input
                                 :value="selectedBarang?.id_barang || ''"
                                 type="text"
                                 readonly
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-50"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm bg-gray-50"
                                 placeholder="Pilih barang terlebih dahulu"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Barang :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Nama Barang :</label>
                             <select
                                 v-model="form.barang_id"
                                 required
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm"
                             >
                                 <option value="">-- Pilih --</option>
                                 <option v-for="barang in barangs" :key="barang.id" :value="barang.id">
@@ -354,107 +342,107 @@ const formatDate = (date) => {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tanggal :</label>
                             <input
                                 v-model="form.tanggal"
                                 type="date"
                                 required
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Jumlah :</label>
                             <input
                                 v-model="form.jumlah"
                                 type="number"
                                 required
                                 min="1"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Harga Beli :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Harga Beli :</label>
                             <div class="relative">
-                                <span class="absolute left-3 top-2 text-sm text-gray-500">Rp</span>
+                                <span class="absolute left-3 top-2 text-xs sm:text-sm text-gray-500">Rp</span>
                                 <input
                                     v-model="formattedHargaBeli"
                                     type="text"
                                     required
-                                    class="w-full border border-gray-300 rounded pl-10 pr-3 py-2 text-sm text-left"
+                                    class="w-full border border-gray-300 rounded pl-8 sm:pl-10 pr-3 py-2 text-xs sm:text-sm text-left"
                                     placeholder="0"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Vendor :</label>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Vendor :</label>
                             <input
                                 v-model="form.vendor"
                                 type="text"
                                 required
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm"
                                 placeholder="Masukan Vendor Barang..."
                             />
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">PPN :</label>
-                            <div class="flex items-center gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">PPN :</label>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                                 <label class="flex items-center gap-2">
                                     <input
                                         v-model="form.is_ppn"
                                         type="checkbox"
                                         class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                     />
-                                    <span class="text-sm">Termasuk PPN (11%)</span>
+                                    <span class="text-xs sm:text-sm">Termasuk PPN (11%)</span>
                                 </label>
-                                <span v-if="form.is_ppn" class="text-sm font-semibold text-blue-600">
+                                <span v-if="form.is_ppn" class="text-xs sm:text-sm font-semibold text-blue-600">
                                     {{ formatCurrency(ppnAmount) }}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan :</label>
+                    <div class="mt-4 sm:mt-6">
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Keterangan :</label>
                         <textarea
                             v-model="form.keterangan"
                             rows="3"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-xs sm:text-sm"
                             placeholder="Keterangan tambahan (opsional)"
                         ></textarea>
                     </div>
 
-                    <div v-if="form.barang_id && form.harga_beli > 0" class="mt-6 bg-blue-50 border border-blue-200 rounded p-4">
-                        <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div v-if="form.barang_id && form.harga_beli > 0" class="mt-4 sm:mt-6 bg-blue-50 border border-blue-200 rounded p-3 sm:p-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
                             <div>
                                 <span class="text-gray-600">Subtotal:</span>
-                                <p class="font-semibold text-lg">{{ formatCurrency(form.harga_beli * form.jumlah) }}</p>
+                                <p class="font-semibold text-base sm:text-lg">{{ formatCurrency(form.harga_beli * form.jumlah) }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600">PPN (11%):</span>
-                                <p class="font-semibold text-lg">{{ formatCurrency(ppnAmount) }}</p>
+                                <p class="font-semibold text-base sm:text-lg">{{ formatCurrency(ppnAmount) }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-600">Total:</span>
-                                <p class="font-bold text-blue-600 text-xl">{{ formatCurrency(totalAmount) }}</p>
+                                <p class="font-bold text-blue-600 text-lg sm:text-xl">{{ formatCurrency(totalAmount) }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                    <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 mt-4 sm:mt-6 pt-4 border-t border-gray-200">
                         <button
                             type="button"
                             @click="closeModal"
-                            class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition"
+                            class="w-full sm:w-auto px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded transition text-sm"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
-                            class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition"
+                            class="w-full sm:w-auto px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition text-sm"
                         >
                             Simpan
                         </button>

@@ -196,19 +196,19 @@ const changePage = (url) => {
             <div class="flex items-center gap-2 text-white">
                 <Home :size="20" />
                 <ChevronRight :size="16" />
-                <span>Barang</span>
+                <span class="text-sm md:text-base">Barang</span>
                 <ChevronRight :size="16" />
-                <span class="font-semibold">Data</span>
+                <span class="font-semibold text-sm md:text-base">Data</span>
             </div>
         </template>
 
         <div class="bg-white rounded-lg shadow-md">
-            <div class="border-b border-gray-200 p-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-gray-800">Data Barang</h2>
+            <div class="border-b border-gray-200 p-4 md:p-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800">Data Barang</h2>
                     <button 
                         @click="openCreateModal"
-                        class="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+                        class="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 md:px-4 py-2 rounded-lg transition text-sm md:text-base w-full sm:w-auto justify-center"
                     >
                         <Plus :size="18" />
                         Entri Data
@@ -216,28 +216,28 @@ const changePage = (url) => {
                 </div>
             </div>
 
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Tampilkan</label>
+            <div class="p-4 md:p-6 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <label class="text-xs md:text-sm text-gray-700 whitespace-nowrap">Tampilkan</label>
                         <select 
                             v-model="perPage"
-                            class="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
+                            class="border border-gray-300 rounded px-2 py-1 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <span class="text-sm text-gray-700">data</span>
+                        <span class="text-xs md:text-sm text-gray-700">data</span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Cari:</label>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <label class="text-xs md:text-sm text-gray-700 whitespace-nowrap">Cari:</label>
                         <input 
                             v-model="search"
                             type="text"
-                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64 focus:ring-blue-500 focus:border-blue-500"
+                            class="border border-gray-300 rounded px-3 py-1 text-xs md:text-sm w-full md:w-64 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Cari barang..."
                         />
                     </div>
@@ -252,17 +252,17 @@ const changePage = (url) => {
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="w-full min-w-[800px]">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">ID Barang</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Jenis</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Stok</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Satuan</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Harga Jual</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">ID Barang</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Barang</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Jenis</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Stok</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Satuan</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Harga Jual</th>
+                            <th class="px-2 md:px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -274,13 +274,13 @@ const changePage = (url) => {
                                 isLowStock(barang) ? 'bg-red-100' : ''
                             ]"
                         >
-                            <td class="px-4 py-3 text-sm text-gray-700 border">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">
                                 {{ barangs.from + index }}
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ barang.id_barang }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ barang.nama_barang }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ getJenisBarangNama(barang) }}</td>
-                            <td class="px-4 py-3 text-sm border">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">{{ barang.id_barang }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">{{ barang.nama_barang }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">{{ getJenisBarangNama(barang) }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm border">
                                 <span :class="[
                                     'font-semibold',
                                     isLowStock(barang) ? 'text-red-600' : 'text-gray-700'
@@ -291,9 +291,9 @@ const changePage = (url) => {
                                     Stok Rendah
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ getSatuanNama(barang) }}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700 border">{{ formatCurrency(barang.harga_jual) }}</td>
-                            <td class="px-4 py-3 text-sm border">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">{{ getSatuanNama(barang) }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">{{ formatCurrency(barang.harga_jual) }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm border">
                                 <div class="flex items-center justify-center gap-2">
                                     <button 
                                         @click="openEditModal(barang)"
@@ -313,7 +313,7 @@ const changePage = (url) => {
                             </td>
                         </tr>
                         <tr v-if="barangs.data.length === 0">
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500 border">
+                            <td colspan="8" class="px-2 md:px-4 py-8 text-center text-gray-500 border text-sm">
                                 Tidak ada data barang
                             </td>
                         </tr>
@@ -322,19 +322,19 @@ const changePage = (url) => {
             </div>
 
             <!-- Pagination Section -->
-            <div class="p-6 border-t border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
+            <div class="p-4 md:p-6 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="text-xs md:text-sm text-gray-700 text-center md:text-left">
                         Menampilkan {{ barangs.from }} sampai {{ barangs.to }} dari {{ barangs.total }} data
                     </div>
                     
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
                         <!-- Previous Button -->
                         <button
                             @click="changePage(barangs.prev_page_url)"
                             :disabled="!barangs.prev_page_url"
                             :class="[
-                                'px-3 py-2 rounded transition flex items-center gap-1',
+                                'px-2 md:px-3 py-2 rounded transition flex items-center gap-1',
                                 barangs.prev_page_url
                                     ? 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'
                                     : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
@@ -350,7 +350,7 @@ const changePage = (url) => {
                                 @click="changePage(link.url)"
                                 :disabled="!link.url"
                                 :class="[
-                                    'px-4 py-2 rounded transition min-w-[40px]',
+                                    'px-3 md:px-4 py-2 rounded transition min-w-[36px] md:min-w-[40px] text-xs md:text-sm',
                                     link.active
                                         ? 'bg-blue-500 text-white font-semibold'
                                         : link.url
@@ -367,7 +367,7 @@ const changePage = (url) => {
                             @click="changePage(barangs.next_page_url)"
                             :disabled="!barangs.next_page_url"
                             :class="[
-                                'px-3 py-2 rounded transition flex items-center gap-1',
+                                'px-2 md:px-3 py-2 rounded transition flex items-center gap-1',
                                 barangs.next_page_url
                                     ? 'bg-white border border-gray-300 hover:bg-gray-50 text-gray-700'
                                     : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed'
@@ -382,21 +382,21 @@ const changePage = (url) => {
 
         <div 
             v-if="showModal"
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             @click.self="showModal = false"
         >
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-base md:text-lg font-bold text-gray-800 mb-4">
                     {{ modalMode === 'create' ? 'Tambah Data Barang' : 'Edit Data Barang' }}
                 </h3>
 
                 <form @submit.prevent="submitForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Barang</label>
+                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Jenis Barang</label>
                         <Combobox v-model="form.jenis_barang_id" as="div" class="relative">
                             <div class="relative">
                                 <ComboboxInput
-                                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                     @change="jenisBarangQuery = $event.target.value"
                                     :display-value="(jenisId) => jenisBarangs.find(j => j.id === jenisId)?.nama_jenis ?? ''"
                                     placeholder="Pilih atau cari jenis barang"
@@ -426,7 +426,7 @@ const changePage = (url) => {
                                         as="template"
                                     >
                                         <li :class="['relative cursor-default select-none py-2 pl-10 pr-4', active ? 'bg-blue-500 text-white' : 'text-gray-900']">
-                                            <span :class="['block truncate', selected ? 'font-medium' : 'font-normal']">
+                                            <span :class="['block truncate text-xs md:text-sm', selected ? 'font-medium' : 'font-normal']">
                                                 {{ jenis.nama_jenis }} ({{ jenis.kode_jenis }})
                                             </span>
                                             <span v-if="selected" :class="['absolute inset-y-0 left-0 flex items-center pl-3', active ? 'text-white' : 'text-blue-600']">
@@ -441,27 +441,27 @@ const changePage = (url) => {
 
                     <div v-if="previewIdBarang" class="bg-blue-50 border border-blue-200 rounded p-3">
                         <p class="text-xs text-gray-600 mb-1">ID Barang yang akan digunakan:</p>
-                        <p class="text-lg font-bold text-blue-600">{{ previewIdBarang }}</p>
+                        <p class="text-base md:text-lg font-bold text-blue-600">{{ previewIdBarang }}</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
+                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
                         <input 
                             v-model="form.nama_barang"
                             type="text"
                             required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Masukkan nama barang"
                         />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Satuan</label>
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Satuan</label>
                             <select 
                                 v-model="form.satuan_id"
                                 required
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Pilih Satuan</option>
                                 <option v-for="satuan in satuans" :key="satuan.id" :value="satuan.id">
@@ -471,13 +471,13 @@ const changePage = (url) => {
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Stok Awal</label>
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Stok Awal</label>
                             <input 
                                 v-model="form.stok"
                                 type="number"
                                 required
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                                 :disabled="modalMode === 'edit'"
                                 :title="modalMode === 'edit' ? 'Stok awal tidak bisa diubah. Gunakan modul penyesuaian stok.' : ''"
@@ -488,35 +488,35 @@ const changePage = (url) => {
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Stok Minimum</label>
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Stok Minimum</label>
                             <input 
                                 v-model="form.stok_minimum"
                                 type="number"
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Stok Maksimum</label>
+                            <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Stok Maksimum</label>
                             <input 
                                 v-model="form.stok_maksimum"
                                 type="number"
                                 min="0"
-                                class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Harga Jual</label>
+                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Harga Jual</label>
                         <input 
                             v-model="formattedHargaJual"
                             type="text"
                             required
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm focus:ring-blue-500 focus:border-blue-500"
                             placeholder="Rp 0"
                         />
                     </div>
@@ -524,14 +524,14 @@ const changePage = (url) => {
                     <div class="flex items-center gap-2 pt-4">
                         <button 
                             type="submit"
-                            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
+                            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-xs md:text-sm"
                         >
                             {{ modalMode === 'create' ? 'Simpan' : 'Update' }}
                         </button>
                         <button 
                             type="button"
                             @click="showModal = false"
-                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded transition"
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded transition text-xs md:text-sm"
                         >
                             Batal
                         </button>

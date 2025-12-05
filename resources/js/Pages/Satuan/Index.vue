@@ -80,20 +80,20 @@ const deleteSatuan = (id) => {
             <div class="flex items-center gap-2 text-white">
                 <Home :size="20" />
                 <ChevronRight :size="16" />
-                <span>Barang</span>
+                <span class="text-sm md:text-base">Barang</span>
                 <ChevronRight :size="16" />
-                <span class="font-semibold">Satuan</span>
+                <span class="font-semibold text-sm md:text-base">Satuan</span>
             </div>
         </template>
 
         <div class="bg-white rounded-lg shadow-md">
             <!-- Header Card -->
-            <div class="border-b border-gray-200 p-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-gray-800">Satuan</h2>
+            <div class="border-b border-gray-200 p-4 md:p-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800">Satuan</h2>
                     <button 
                         @click="openCreateModal"
-                        class="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
+                        class="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 md:px-4 py-2 rounded-lg transition text-sm md:text-base w-full sm:w-auto justify-center"
                     >
                         <Plus :size="18" />
                         Tambah Satuan
@@ -102,28 +102,28 @@ const deleteSatuan = (id) => {
             </div>
 
             <!-- Filters -->
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Tampilkan</label>
+            <div class="p-4 md:p-6 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <label class="text-xs md:text-sm text-gray-700 whitespace-nowrap">Tampilkan</label>
                         <select 
                             v-model="perPage"
-                            class="border border-gray-300 rounded px-2 py-1 text-sm"
+                            class="border border-gray-300 rounded px-2 py-1 text-xs md:text-sm"
                         >
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <span class="text-sm text-gray-700">data</span>
+                        <span class="text-xs md:text-sm text-gray-700">data</span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Cari:</label>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <label class="text-xs md:text-sm text-gray-700 whitespace-nowrap">Cari:</label>
                         <input 
                             v-model="search"
                             type="text"
-                            class="border border-gray-300 rounded px-3 py-1 text-sm w-64"
+                            class="border border-gray-300 rounded px-3 py-1 text-xs md:text-sm w-full md:w-64"
                             placeholder="Cari satuan..."
                         />
                     </div>
@@ -132,14 +132,14 @@ const deleteSatuan = (id) => {
 
             <!-- Table -->
             <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="w-full min-w-[600px]">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Satuan</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Keterangan</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Digunakan</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">No</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Nama Satuan</th>
+                            <th class="px-2 md:px-4 py-3 text-left text-xs font-semibold text-gray-700 border">Keterangan</th>
+                            <th class="px-2 md:px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Digunakan</th>
+                            <th class="px-2 md:px-4 py-3 text-center text-xs font-semibold text-gray-700 border">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -148,21 +148,21 @@ const deleteSatuan = (id) => {
                             :key="satuan.id"
                             class="hover:bg-gray-50"
                         >
-                            <td class="px-4 py-3 text-sm text-gray-700 border">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-700 border">
                                 {{ satuans.from + index }}
                             </td>
-                            <td class="px-4 py-3 text-sm border">
-                                <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded font-semibold">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm border">
+                                <span class="inline-flex items-center px-2 md:px-3 py-1 bg-purple-100 text-purple-800 rounded font-semibold text-xs md:text-sm">
                                     {{ satuan.nama_satuan }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-600 border">{{ satuan.keterangan || '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-center border">
-                                <span class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-800 rounded-full font-semibold">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-gray-600 border">{{ satuan.keterangan || '-' }}</td>
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm text-center border">
+                                <span class="inline-flex items-center justify-center w-7 h-7 md:w-8 md:h-8 bg-green-100 text-green-800 rounded-full font-semibold text-xs">
                                     {{ satuan.barangs_count }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm border">
+                            <td class="px-2 md:px-4 py-3 text-xs md:text-sm border">
                                 <div class="flex items-center justify-center gap-2">
                                     <button 
                                         @click="openEditModal(satuan)"
@@ -184,7 +184,7 @@ const deleteSatuan = (id) => {
                             </td>
                         </tr>
                         <tr v-if="satuans.data.length === 0">
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-500 border">
+                            <td colspan="5" class="px-2 md:px-4 py-8 text-center text-gray-500 border text-xs md:text-sm">
                                 Tidak ada data satuan
                             </td>
                         </tr>
@@ -193,41 +193,43 @@ const deleteSatuan = (id) => {
             </div>
 
             <!-- Pagination -->
-            <div class="p-6 flex items-center justify-between border-t border-gray-200">
-                <div class="text-sm text-gray-700">
-                    Menampilkan {{ satuans.from }} sampai {{ satuans.to }} dari {{ satuans.total }} data
-                </div>
+            <div class="p-4 md:p-6 border-t border-gray-200">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="text-xs md:text-sm text-gray-700 text-center md:text-left">
+                        Menampilkan {{ satuans.from }} sampai {{ satuans.to }} dari {{ satuans.total }} data
+                    </div>
 
-                <div class="flex items-center gap-2">
-                    <button 
-                        @click="router.get(satuans.prev_page_url)"
-                        :disabled="!satuans.prev_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &lt;
-                    </button>
-
-                    <template v-for="link in satuans.links.slice(1, -1)" :key="link.label">
+                    <div class="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
                         <button 
-                            @click="link.url ? router.get(link.url) : null"
-                            :class="[
-                                'px-3 py-1 border rounded',
-                                link.active 
-                                    ? 'bg-blue-500 text-white border-blue-500' 
-                                    : 'border-gray-300 hover:bg-gray-100'
-                            ]"
+                            @click="router.get(satuans.prev_page_url)"
+                            :disabled="!satuans.prev_page_url"
+                            class="px-2 md:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
                         >
-                            {{ link.label }}
+                            &lt;
                         </button>
-                    </template>
 
-                    <button 
-                        @click="router.get(satuans.next_page_url)"
-                        :disabled="!satuans.next_page_url"
-                        class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        &gt;
-                    </button>
+                        <template v-for="link in satuans.links.slice(1, -1)" :key="link.label">
+                            <button 
+                                @click="link.url ? router.get(link.url) : null"
+                                :class="[
+                                    'px-2 md:px-3 py-1 border rounded text-xs md:text-sm',
+                                    link.active 
+                                        ? 'bg-blue-500 text-white border-blue-500' 
+                                        : 'border-gray-300 hover:bg-gray-100'
+                                ]"
+                            >
+                                {{ link.label }}
+                            </button>
+                        </template>
+
+                        <button 
+                            @click="router.get(satuans.next_page_url)"
+                            :disabled="!satuans.next_page_url"
+                            class="px-2 md:px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm"
+                        >
+                            &gt;
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -235,17 +237,17 @@ const deleteSatuan = (id) => {
         <!-- Modal -->
         <div 
             v-if="showModal"
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
             @click.self="showModal = false"
         >
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-base md:text-lg font-bold text-gray-800 mb-4">
                     {{ modalMode === 'create' ? 'Tambah Satuan' : 'Edit Satuan' }}
                 </h3>
 
                 <form @submit.prevent="submitForm" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                             Nama Satuan
                             <span class="text-xs text-gray-500">(Akan otomatis uppercase)</span>
                         </label>
@@ -254,17 +256,17 @@ const deleteSatuan = (id) => {
                             type="text"
                             required
                             maxlength="50"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm uppercase"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm uppercase"
                             placeholder="Contoh: PCS, UNIT, KG, LITER, BOX"
                         />
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
+                        <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Keterangan</label>
                         <textarea 
                             v-model="form.keterangan"
                             rows="3"
-                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-xs md:text-sm"
                             placeholder="Keterangan tambahan (opsional)"
                         ></textarea>
                     </div>
@@ -272,14 +274,14 @@ const deleteSatuan = (id) => {
                     <div class="flex items-center gap-2 pt-4">
                         <button 
                             type="submit"
-                            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
+                            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-xs md:text-sm"
                         >
                             {{ modalMode === 'create' ? 'Simpan' : 'Update' }}
                         </button>
                         <button 
                             type="button"
                             @click="showModal = false"
-                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded transition"
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded transition text-xs md:text-sm"
                         >
                             Batal
                         </button>
