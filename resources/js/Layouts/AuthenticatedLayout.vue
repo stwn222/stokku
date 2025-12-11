@@ -74,24 +74,6 @@ const toggleSidebar = () => {
                 </div>
             </div>
 
-            <!-- User Info -->
-            <div v-if="showingSidebar" class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-                <div v-if="page.props.auth?.user" class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white">
-                        {{ page.props.auth.user.name?.charAt(0).toUpperCase() || 'U' }}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-gray-900 truncate">
-                            {{ page.props.auth.user.name }}
-                        </p>
-                        <p class="text-xs px-2.5 py-1 rounded-lg inline-block mt-1 font-medium"
-                           :class="isAdministrator ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'">
-                            {{ page.props.auth.user.hak_akses }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Navigation Menu -->
             <nav class="flex-1 overflow-y-auto p-3 space-y-1">
                 <!-- Dashboard -->

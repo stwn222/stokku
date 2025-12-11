@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class BarangMasuk extends Model
 {
@@ -41,16 +42,23 @@ class BarangMasuk extends Model
 
     public static function generateKodeTransaksi()
     {
-        $lastTransaction = self::latest('id')->first();
-        
-        if (!$lastTransaction) {
-            return 'TM0001';
-        }
+        // Gunakan lock untuk mencegah race condition
+        return DB::transaction(function () {
+            $lastTransaction = self::orderBy('kode_transaksi', 'desc')
+                ->lockForUpdate()
+                ->first();
+            
+            if (!$lastTransaction) {
+                return 'TM0001';
+            }
 
-        $lastNumber = (int) substr($lastTransaction->kode_transaksi, 5);
-        $nextNumber = $lastNumber + 1;
+            // PERBAIKAN: Gunakan posisi 2, bukan 5
+            // Format: TM0001 -> substr dari posisi 2 = "0001"
+            $lastNumber = (int) substr($lastTransaction->kode_transaksi, 2);
+            $nextNumber = $lastNumber + 1;
 
-        return 'TM' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            return 'TM' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        });
     }
 
     public function calculatePPN()
