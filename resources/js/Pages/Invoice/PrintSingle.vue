@@ -46,10 +46,11 @@ const formatTerbilang = computed(() => {
     return '( ' + terbilang(rupiah).trim() + ' Rupiah )';
 });
 
+import logoBip from '@/assets/images/logo-bip.png';
+import logoMju from '@/assets/images/logo-mju.png';
+
 const logoPath = computed(() => {
-    return props.invoice.tipe_invoice === 'BIP' 
-        ? '/images/logo-bip.png'
-        : '/images/logo-mju.png';
+    return props.invoice.tipe_invoice === 'BIP' ? logoBip : logoMju;
 });
 
 const companyName = computed(() => {
@@ -84,7 +85,7 @@ onMounted(() => {
 <template>
     <div class="print-container">
         <div class="invoice-page">
-            <!-- Header dengan alamat dan INVOICE sejajar -->
+            <!-- Header dengan logo dan alamat -->
             <div class="header-section">
                 <div class="company-info">
                     <div class="company-name">{{ companyName }}</div>
@@ -97,14 +98,14 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="invoice-title-section">
-                    <div class="invoice-title">INVOICE</div>
+                    <img :src="logoPath" :alt="invoice.tipe_invoice" class="invoice-logo" />
                 </div>
             </div>
 
             <!-- Garis pembatas pertama -->
             <div class="divider-line"></div>
 
-            <!-- Nomor Invoice dan Tanggal di tengah -->
+            <!-- Nomor Invoice dan Tanggal -->
             <div class="invoice-meta-center">
                 <span>Nomor Invoice {{ invoice.nomor_invoice }}</span>
                 <span class="meta-divider">-</span>
@@ -234,7 +235,7 @@ onMounted(() => {
     position: relative;
 }
 
-/* HEADER SECTION - Alamat dan INVOICE sejajar */
+/* HEADER SECTION */
 .header-section {
     display: flex;
     justify-content: space-between;
@@ -262,11 +263,10 @@ onMounted(() => {
     text-align: right;
 }
 
-.invoice-title {
-    font-size: 50px;
-    font-weight: bold;
-    letter-spacing: 12px;
-    line-height: 1;
+.invoice-logo {
+    width: 130px;
+    height: auto;
+    object-fit: contain;
 }
 
 /* GARIS PEMBATAS */
@@ -277,7 +277,7 @@ onMounted(() => {
     margin: 8px 0;
 }
 
-/* NOMOR INVOICE DAN TANGGAL DI TENGAH */
+/* NOMOR INVOICE DAN TANGGAL */
 .invoice-meta-center {
     text-align: start;
     font-size: 10px;
@@ -495,14 +495,23 @@ onMounted(() => {
     .print-container {
         margin: 0;
         width: 210mm;
+        page-break-inside: avoid;
     }
 
     .invoice-page {
         page-break-after: avoid;
+        page-break-inside: avoid;
     }
 
     .watermark {
         opacity: 0.08;
+        page-break-inside: avoid;
+    }
+
+    .invoice-table,
+    .footer-grid,
+    .info-grid {
+        page-break-inside: avoid;
     }
 }
 </style>

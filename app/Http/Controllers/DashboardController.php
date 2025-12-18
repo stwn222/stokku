@@ -17,33 +17,22 @@ class DashboardController extends Controller
     {
         $stats = [
             'totalBarang' => Barang::count(),
-            'totalBarangMasuk' => BarangMasuk::count(),
-            'totalBarangKeluar' => BarangKeluar::count(),
+            'totalBarangMasuk' => BarangMasuk::sum('jumlah'),
+            'totalBarangKeluar' => BarangKeluar::sum('jumlah'),
             'totalJenisBarang' => JenisBarang::count(),
             'totalSatuan' => Satuan::count(),
             'totalUser' => User::count(),
         ];
 
-        // Ambil data terbaru dengan created_at untuk timestamp yang akurat
         $recentBarangMasuk = BarangMasuk::with(['barang.satuan', 'user'])
-            ->latest('created_at') // Gunakan created_at untuk sorting
-            ->take(4)
-            ->get()
-            ->map(function ($item) {
-                // Tambahkan field waktu_transaksi untuk ditampilkan
-                $item->waktu_transaksi = $item->created_at;
-                return $item;
-            });
+            ->latest('created_at')
+            ->take(5)
+            ->get();
 
         $recentBarangKeluar = BarangKeluar::with(['barang.satuan', 'user'])
-            ->latest('created_at') // Gunakan created_at untuk sorting
-            ->take(4)
-            ->get()
-            ->map(function ($item) {
-                // Tambahkan field waktu_transaksi untuk ditampilkan
-                $item->waktu_transaksi = $item->created_at;
-                return $item;
-            });
+            ->latest('created_at')
+            ->take(5)
+            ->get();
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
